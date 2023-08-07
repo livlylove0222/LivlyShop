@@ -83,6 +83,9 @@ img {
   cursor: pointer;
   font-size: 13px;
 }
+.imgs:active {
+  transform: scale(.95);
+}
 
 .list::after {
   content: "";
@@ -187,6 +190,6 @@ img {
   }
 
   .price {
-    bottom: 0;
+    bottom: -1px;
   }
 }
