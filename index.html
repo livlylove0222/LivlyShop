@@ -13,13 +13,13 @@
   <div class="cart close">
     <div class="cart-item items"></div>
     <div class="total">
-      <button class="cart-btn"><img src="cart.svg" alt=""></button>
+      <button class="cart-btn"><img class="arrow" src="arrow.svg" alt=""><img src="cart.svg" alt=""></button>
       <!-- <div>TOTAL : <span class="total-price">0</span> GP</div> -->
       <div>TOTAL : <span class="total-price" gprice="0">0</span></div>
     </div>
   </div>
   <div class="wrapper">
-    <div class="tip">假的購物車，只要網頁重整內容就會不見，請自行截圖保存</div>
+    <div class="tip">假的購物車，只要網頁重整就會清空，內容請自行截圖保存</div>
   </div>
   <div class="wrapper">
     <div class="title">SR</div>
@@ -656,7 +656,7 @@
     $('.imgs').each(function () {
       getAlt = $(this).children().attr('alt');
 
-      // 商店算式
+      // GREDERY
       if (Math.floor(getAlt / 5) <= 0) {
         getAlt = getAlt + 'N'
       } else {
@@ -674,10 +674,10 @@
       getAlt = $(this).children().attr('alt');
       $('.cart-item').append('<div class="list imgs">' + $(this).html() + '</div>');
 
-      // MyShop算式
+      // MyShop
       // price = parseInt($('.total-price').text()) + parseInt(getAlt);
 
-      // 商店算式
+      // GREDERY
       gPrice = $('.total-price').attr('gprice')
       price = parseFloat(gPrice) + parseFloat(getAlt);
       $('.total-price').attr('gprice', price)
@@ -697,10 +697,10 @@
     $('.cart-item').on('click', '.list', function () {
       getAlt = $(this).children().attr('alt');
 
-      // MyShop算式
+      // MyShop
       // price = parseInt($('.total-price').text()) - parseInt(getAlt);
 
-      // 商店算式
+      // GREDERY
       gPrice = $('.total-price').attr('gprice')
       price = parseFloat(gPrice) - parseFloat(getAlt);
       $('.total-price').attr('gprice', price)
