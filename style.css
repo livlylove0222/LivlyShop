@@ -189,8 +189,9 @@ img {
 
   .tip {
     align-self: flex-start;
-    width: 60%;
-    height: 70px;
+    width: 50%;
+    height: auto;
+    min-height: 70px;
   }
 
   .price {
