@@ -10,7 +10,7 @@ body, html {
 
 body {
   color: #171C2F;
-  padding-bottom: 50px;
+  padding-bottom: 70px;
 }
 
 a,
@@ -175,6 +175,31 @@ img {
 
 .cart.close .arrow {
   transform: rotate(0deg);
+}
+
+.toTop {
+  position: fixed;
+  right: 15px;
+  bottom: 20px;
+  background: #fff;
+  width: 60px;
+  height: 60px;
+  border-radius: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 4px 0px #004a8f;
+  transition: all .3s;
+  z-index: 1000;
+}
+
+.toTop img {
+  transform: rotate(90deg);
+  width: 18px;
+}
+
+.t-close{
+  margin-right: 480px;
 }
 
 @media (max-width:767px) {
