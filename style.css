@@ -179,26 +179,26 @@ img {
 
 .toTop {
   position: fixed;
-  right: 15px;
-  bottom: 20px;
-  background: #fff;
-  width: 60px;
-  height: 60px;
-  border-radius: 100%;
+  bottom: 30px;
+  right: 30px;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 4px 0px #004a8f;
-  transition: all .3s;
+  width: 40px;
+  height: 40px;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 1px 2px 5px -2px #004a8f;
+  transition: margin .5s;
   z-index: 1000;
 }
 
 .toTop img {
   transform: rotate(90deg);
-  width: 18px;
+  width: 12px;
 }
 
-.t-close{
+.t-close {
   margin-right: 480px;
 }
 

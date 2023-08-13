@@ -37,9 +37,9 @@
       <div class="imgs"><img loading="lazy" src="images/SR/SR-25.jpg" alt="7"></div>
       <div class="imgs"><img loading="lazy" src="images/SR/SR-40.jpg" alt="6"></div>
       <div class="imgs"><img loading="lazy" src="images/SR/SR-24.jpg" alt="3"></div>
-      <div class="imgs"><img loading="lazy" src="images/SR/SR-23.jpg" alt="4"></div>
-      <div class="imgs"><img loading="lazy" src="images/SR/SR-22.jpg" alt="3"></div>
-      <div class="imgs"><img loading="lazy" src="images/SR/SR-21.jpg" alt="10"></div>
+      <div class="imgs"><img loading="lazy" src="images/SR/SR-23.jpg" alt="3"></div>
+      <div class="imgs"><img loading="lazy" src="images/SR/SR-22.jpg" alt="2"></div>
+      <div class="imgs"><img loading="lazy" src="images/SR/SR-21.jpg" alt="7"></div>
       <div class="imgs"><img loading="lazy" src="images/SR/SR-37.jpg" alt="3"></div>
       <div class="imgs"><img loading="lazy" src="images/SR/SR-19.jpg" alt="7"></div>
       <div class="imgs"><img loading="lazy" src="images/SR/SR-17.jpg" alt="7"></div>
@@ -753,12 +753,18 @@
     })
   </script>
   <script>
+    // toTop
+    $('.toTop').hide();
     $(".toTop").click(function () {
-      $("html, body").animate({
-        scrollTop: 0
-      }, "slow");
-      return false;
+      $("html, body").animate({ scrollTop: 0 }, "slow");
     });
+    $(window).scroll(function () {
+      if ($(this).scrollTop() > 300) {
+        $('.toTop').fadeIn();
+      } else {
+        $('.toTop').fadeOut();
+      }
+    })
   </script>
 </body>
 
