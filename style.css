@@ -29,16 +29,16 @@ img {
 }
 
 ::-webkit-scrollbar {
-  width: 7px;
+  width: 10px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #888;
+  background: #e3e8ea;
 }
 
 ::-webkit-scrollbar-thumb {
   border-radius: 4px;
-  background-color: #171C2F;
+  background-color: #6c77a4;
 }
 
 .wrapper {
