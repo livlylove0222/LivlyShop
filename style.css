@@ -99,7 +99,11 @@ img {
 
 .price {
   position: absolute;
-  bottom: 1px;
+  bottom: 3px;
+  width: 100%;
+  background: #fff;
+  text-align: center;
+  line-height: 1;
 }
 
 .cart {
@@ -220,6 +224,6 @@ img {
   }
 
   .price {
-    bottom: -1px;
+    /* bottom: 2px; */
   }
 }
