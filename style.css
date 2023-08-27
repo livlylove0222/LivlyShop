@@ -224,6 +224,6 @@ img {
   }
 
   .price {
-    /* bottom: 2px; */
+    padding: 1px;
   }
 }
