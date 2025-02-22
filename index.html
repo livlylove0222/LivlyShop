@@ -180,7 +180,6 @@
       </div>
     </div>
   </div>
-
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script>
     function setCookie(name, value, days) {
@@ -204,22 +203,25 @@
     }
 
     function clearCookie() {
-      $(".userInput").each(function () {
-        setCookie($(this).data("key"), "", -1);
+      $(".userInput").each(function (index) {
+        let key = "input_" + index;
+        setCookie(key, "", -1);
         $(this).val("");
       });
     }
 
     function saveToCookie() {
-      $(".userInput").each(function () {
-        setCookie($(this).data("key"), $(this).val(), 7);
+      $(".userInput").each(function (index) {
+        let key = "input_" + index;
+        setCookie(key, $(this).val(), 7);
       });
       alert("已儲存到 Cookie！");
     }
 
     $(document).ready(function () {
-      $(".userInput").each(function () {
-        let savedValue = getCookie($(this).data("key"));
+      $(".userInput").each(function (index) {
+        let key = "input_" + index;
+        let savedValue = getCookie(key);
         if (savedValue) {
           $(this).val(savedValue);
         }
@@ -229,6 +231,6 @@
       $("#clearBtn").click(clearCookie);
     });
   </script>
-
 </body>
+
 </html>
