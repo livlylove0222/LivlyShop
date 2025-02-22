@@ -3,16 +3,230 @@
 
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="shortcut icon" href="favicon.ico" />
-  <link rel="bookmark" href="favicon.ico" />
-  <script src="https://code.jquery.com/jquery-3.7.0.js" integrity="sha256-JlqSTELeR4TLqP0OG9dxM7yDPqX1ox/HfgiSLBj8+kM=" crossorigin="anonymous"></script>
+  <link rel="bookmark" href="favicon.ico">
   <link rel="stylesheet" href="style.css">
-  <title>MY SHOP</title>
+  <title>創商</title>
 </head>
 
-<body ontouchstart>
- <div class="byebye"><img src="images/shop-close.png" alt="close"></div>
+<body>
+  <div class="all">
+    <div class="img"><img src="images/bg.jpg" alt=""></div>
+    <div class="count">
+      <div class="shop">
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+      </div>
+      <div class="shop">
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+      </div>
+      <div class="shop">
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+      </div>
+      <div class="shop">
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+      </div>
+      <div class="shop">
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+        <div class="buy">
+          <input type="text">
+          <input type="text">
+          <input type="text">
+        </div>
+      </div>
+    </div>
+  </div>
 </body>
+
+    <label for="userInput">輸入內容：</label>
+    <input type="text" id="userInput">
+    <button onclick="saveToCookie()">儲存到 Cookie</button>
+    <button onclick="clearCookie()">清除 Cookie</button>
+
+    <script>
+        // 設定 Cookie 的函數
+        function setCookie(name, value, days) {
+            let expires = "";
+            if (days) {
+                let date = new Date();
+                date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+                expires = "; expires=" + date.toUTCString();
+            }
+            document.cookie = name + "=" + encodeURIComponent(value) + expires + "; path=/";
+        }
+
+        // 取得 Cookie 的函數
+        function getCookie(name) {
+            let nameEQ = name + "=";
+            let cookiesArray = document.cookie.split(';');
+            for (let i = 0; i < cookiesArray.length; i++) {
+                let c = cookiesArray[i].trim();
+                if (c.indexOf(nameEQ) === 0) return decodeURIComponent(c.substring(nameEQ.length));
+            }
+            return "";
+        }
+
+        // 清除 Cookie
+        function clearCookie() {
+            setCookie("savedInput", "", -1);
+            document.getElementById("userInput").value = "";
+        }
+
+        // 按下按鈕時儲存輸入值到 Cookie
+        function saveToCookie() {
+            let inputValue = document.getElementById("userInput").value;
+            setCookie("savedInput", inputValue, 7); // 保存 7 天
+            alert("已儲存到 Cookie！");
+        }
+
+        // 載入時讀取 Cookie
+        window.onload = function () {
+            let savedValue = getCookie("savedInput");
+            if (savedValue) {
+                document.getElementById("userInput").value = savedValue;
+            }
+        };
+    </script>
+
 
 </html>
