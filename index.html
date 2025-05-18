@@ -1,364 +1,134 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-Hant">
 
 <head>
   <meta charset="UTF-8">
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="bookmark" href="favicon.ico">
-  <link rel="stylesheet" href="style.css">
-  <title>創商</title>
+  <title>格萊德里商店計算機</title>
+  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 </head>
 
 <body>
-  <div class="btn">
-    <button id="saveBtn">儲存</button>
-    <button id="clearBtn">清除</button>
+  <style>
+    body {
+      font-family: 'PingFang TC', '微軟正黑體', sans-serif;
+    }
+
+    div {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    input#gpInput {
+      font-family: inherit;
+      outline: 0;
+      border-radius: 4px;
+      height: 28px;
+      padding: 0 6px;
+      border: 1px solid #000;
+    }
+
+    button#calculateBtn {
+      font-family: inherit;
+      line-height: 30px;
+      padding: 0 12px;
+      border: 0;
+      outline: 0;
+      background: #383e62;
+      color: #fff;
+      border-radius: 4px;
+    }
+
+    pre#result {
+      font-size: 16px;
+      font-family: inherit;
+    }
+  </style>
+  <h2>格萊德里商店計算機</h2>
+  <div>
+    <label>輸入持有 GP 數量：</label>
+    <input type="number" id="gpInput" value="10000">
+    <button id="calculateBtn">計算</button>
   </div>
-  <div class="all">
-    <div class="count">
-      <div class="img"><img src="images/c1.jpg" alt=""></div>
-      <div class="shop">
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-      </div>
-    </div>
-    <div class="count">
-      <div class="img"><img src="images/c2.jpg" alt=""></div>
-      <div class="shop">
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs" style="opacity: 0;"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-      </div>
-    </div>
-    <div class="count">
-      <div class="img"><img src="images/c3.jpg" alt=""></div>
-      <div class="shop">
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-      </div>
-    </div>
-    <div class="count">
-      <div class="img"><img src="images/c4.jpg" alt=""></div>
-      <div class="shop">
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs" style="opacity: 0;"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs" style="opacity: 0;"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-      </div>
-    </div>
-    <div class="count">
-      <div class="img"><img src="images/c5.jpg" alt=""></div>
-      <div class="shop">
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs" style="opacity: 0;"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-        <div class="buy" style="opacity: 0;">
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-          <div class="inputs"><label><input class="userCheck" type="checkbox"></label><input type="text"
-              class="userInput"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+  <pre id="result"></pre>
+
   <script>
-    $(document).ready(function () {
-      // 儲存 Cookie
-      $("#saveBtn").click(function () {
-        let inputs = [];
-        $(".userInput").each(function () {
-          inputs.push($(this).val());
-        });
+    const PRICES = { SR: 5000, R: 1500, N: 300 };
+    const DISCOUNTS = { 2: 0.95, 3: 0.90 }; // 2件95折，3件以上9折
 
-        let checks = [];
-        $(".userCheck").each(function () {
-          checks.push($(this).prop("checked") ? 1 : 0);
-        });
+    function getDiscountedCost(combo) {
+      const count = combo.length;
+      const total = combo.reduce((sum, item) => sum + PRICES[item], 0);
+      if (count >= 3) return total * DISCOUNTS[3];
+      if (count === 2) return total * DISCOUNTS[2];
+      return total;
+    }
 
-        document.cookie = "userInputs=" + JSON.stringify(inputs) + "; path=/";
-        document.cookie = "userChecks=" + JSON.stringify(checks) + "; path=/";
-        showNotification("已儲存");
-      });
+    function getMaxCombo(budget) {
+      let storePoint = 0;
+      let totalGPUsed = 0;
+      let purchaseLog = [];
 
-      // 讀取 Cookie
-      function getCookie(name) {
-        let cookies = document.cookie.split("; ");
-        for (let i = 0; i < cookies.length; i++) {
-          let parts = cookies[i].split("=");
-          if (parts[0] === name) {
-            return decodeURIComponent(parts[1]);
+      while (true) {
+        let remaining = budget + storePoint;
+        let found = false;
+
+        // 先找最多件折扣組合，優先 SR > R > N
+        const combinations = [
+          ['SR', 'SR', 'SR'],
+          ['SR', 'SR', 'R'],
+          ['SR', 'SR', 'N'],
+          ['SR', 'R', 'R'],
+          ['SR', 'R', 'N'],
+          ['SR', 'N', 'N'],
+          ['R', 'R', 'R'],
+          ['R', 'R', 'N'],
+          ['R', 'N', 'N'],
+          ['N', 'N', 'N'],
+          ['SR', 'SR'],
+          ['SR', 'R'],
+          ['SR', 'N'],
+          ['R', 'R'],
+          ['R', 'N'],
+          ['N', 'N']
+        ];
+
+        for (let combo of combinations) {
+          let cost = Math.floor(getDiscountedCost(combo));
+          if (cost <= remaining) {
+            budget -= (cost - storePoint);
+            if (budget < 0) storePoint -= cost - (budget + storePoint);
+            else storePoint = 0;
+            const pointEarned = Math.floor(cost * 0.01);
+            storePoint += pointEarned;
+            totalGPUsed += cost - storePoint;
+            purchaseLog.push({ combo, cost, storePoint });
+            found = true;
+            break;
           }
         }
-        return "";
+
+        if (!found) break;
       }
 
-      // 載入時從 Cookie 還原
-      function loadFromCookie() {
-        let inputData = getCookie("userInputs");
-        let checkData = getCookie("userChecks");
+      return { purchaseLog, totalGPUsed, remainingGP: budget, remainingPoint: storePoint };
+    }
 
-        if (inputData) {
-          let inputs = JSON.parse(inputData);
-          $(".userInput").each(function (index) {
-            if (inputs[index] !== undefined) {
-              $(this).val(inputs[index]);
-            }
-          });
-        }
-
-        if (checkData) {
-          let checks = JSON.parse(checkData);
-          $(".userCheck").each(function (index) {
-            if (checks[index] !== undefined) {
-              $(this).prop("checked", checks[index] === 1);
-            }
-          });
-        }
-      }
-
-      loadFromCookie(); // 頁面載入時自動載入 Cookie
-
-      // 清除 Cookie
-      $("#clearBtn").click(function () {
-        document.cookie = "userInputs=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = "userChecks=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        $(".userInput").val("");
-        $(".userCheck").prop("checked", false);
-        showNotification("已清除");
+    function renderResult(data) {
+      let text = `共使用 GP：${data.totalGPUsed}\n剩餘 GP：${data.remainingGP}\n剩餘商店點數：${data.remainingPoint}\n\n購買順序：\n`;
+      data.purchaseLog.forEach((entry, idx) => {
+        text += `第 ${idx + 1} 次：${entry.combo.join('+')}，花費：${entry.cost}，獲得點數：${entry.storePoint}\n`;
       });
+      return text;
+    }
 
-
-      function showNotification(message) {
-        let $notification = $("<div class='notification'></div>").text(message);
-        $("body").append($notification);
-
-        $notification.animate({ top: "-=50px", opacity: 0 }, 700, function () {
-          $(this).remove();
-        });
-      }
-
+    $('#calculateBtn').on('click', function () {
+      const gp = parseInt($('#gpInput').val(), 10);
+      const result = getMaxCombo(gp);
+      $('#result').text(renderResult(result));
     });
   </script>
 </body>
