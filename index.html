@@ -2,38 +2,44 @@
 <html lang="zh-Hant">
 
 <head>
-  <meta charset="UTF-8">
-  <meta http-equiv="X-UA-Compatible" content="IE=edge">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="bookmark" href="favicon.ico">
-  <title>格萊德里商店計算機</title>
+  <meta charset="UTF-8" />
+  <title>格萊德里計算機</title>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
 </head>
 
 <body>
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
       font-family: 'PingFang TC', '微軟正黑體', sans-serif;
     }
 
+    h2 {
+      margin: 3px 0;
+    }
+
     div {
+      padding: 6px 0;
       display: flex;
       align-items: center;
       gap: 6px;
     }
 
-    input#gpInput {
+    input {
       font-family: inherit;
       outline: 0;
       border-radius: 4px;
-      height: 28px;
+      height: 30px;
       padding: 0 6px;
-      border: 1px solid #000;
+      border: 1px solid #383e62;
     }
 
-    button#calculateBtn {
+    button {
       font-family: inherit;
-      line-height: 30px;
+      height: 30px;
       padding: 0 12px;
       border: 0;
       outline: 0;
@@ -42,23 +48,25 @@
       border-radius: 4px;
     }
 
-    pre#result {
+    pre {
       font-size: 16px;
       font-family: inherit;
     }
   </style>
-  <h2>格萊德里商店計算機</h2>
+  <h2>格萊德里折扣計算機</h2>
   <div>
     <label>輸入持有 GP 數量：</label>
-    <input type="number" id="gpInput" value="10000">
-    <button id="calculateBtn">計算</button>
+    <input type="number" id="gpInput" value="15000" />
+    <button id="generateOptionsBtn">產生</button>
   </div>
+  <div id="srOptions"></div>
   <pre id="result"></pre>
 
   <script>
     const PRICES = { SR: 5000, R: 1500, N: 300 };
-    const DISCOUNTS = { 2: 0.95, 3: 0.90 }; // 2件95折，3件以上9折
+    const DISCOUNTS = { 2: 0.95, 3: 0.90 };
 
+    // 計算組合折扣後價格
     function getDiscountedCost(combo) {
       const count = combo.length;
       const total = combo.reduce((sum, item) => sum + PRICES[item], 0);
@@ -67,68 +75,124 @@
       return total;
     }
 
-    function getMaxCombo(budget) {
-      let storePoint = 0;
+    // 用剩餘預算買最多R和N，優先R，再N，盡量湊三件折扣
+    // 這邊用簡單策略：盡量湊3件組合R、N
+    function buyRestWithRN(budget, storePoint) {
       let totalGPUsed = 0;
       let purchaseLog = [];
 
       while (true) {
         let remaining = budget + storePoint;
-        let found = false;
 
-        // 先找最多件折扣組合，優先 SR > R > N
-        const combinations = [
-          ['SR', 'SR', 'SR'],
-          ['SR', 'SR', 'R'],
-          ['SR', 'SR', 'N'],
-          ['SR', 'R', 'R'],
-          ['SR', 'R', 'N'],
-          ['SR', 'N', 'N'],
+        // 嘗試湊3件組合，優先3R，然後2R+1N，1R+2N，3N
+        const combos = [
           ['R', 'R', 'R'],
           ['R', 'R', 'N'],
           ['R', 'N', 'N'],
           ['N', 'N', 'N'],
-          ['SR', 'SR'],
-          ['SR', 'R'],
-          ['SR', 'N'],
           ['R', 'R'],
           ['R', 'N'],
-          ['N', 'N']
+          ['N', 'N'],
+          ['R'],
+          ['N'],
         ];
 
-        for (let combo of combinations) {
-          let cost = Math.floor(getDiscountedCost(combo));
+        let found = false;
+        for (const combo of combos) {
+          const cost = Math.floor(getDiscountedCost(combo));
           if (cost <= remaining) {
-            budget -= (cost - storePoint);
-            if (budget < 0) storePoint -= cost - (budget + storePoint);
-            else storePoint = 0;
-            const pointEarned = Math.floor(cost * 0.01);
-            storePoint += pointEarned;
-            totalGPUsed += cost - storePoint;
+            let gpUsed = Math.max(cost - storePoint, 0);
+            let pointsUsed = Math.min(storePoint, cost);
+            if (gpUsed > budget) continue;
+
+            budget -= gpUsed;
+            storePoint = storePoint - pointsUsed + Math.floor(cost * 0.01);
+            totalGPUsed += gpUsed;
             purchaseLog.push({ combo, cost, storePoint });
             found = true;
             break;
           }
         }
-
         if (!found) break;
       }
 
       return { purchaseLog, totalGPUsed, remainingGP: budget, remainingPoint: storePoint };
     }
 
+    // 核心函式：先處理SR購買，且不足3件時搭配R/N湊滿3件享折扣
+    function handleSRSelection(srCount, initialGP) {
+      let budget = initialGP;
+      let storePoint = 0;
+      let purchaseLog = [];
+      let remainingSR = srCount;
+
+      while (remainingSR > 0) {
+        // 先取出最多3件SR
+        let takeSR = Math.min(remainingSR, 3);
+
+        // 若不到3件SR，用R/N湊滿3件
+        let combo = [];
+        for (let i = 0; i < takeSR; i++) combo.push('SR');
+
+        if (combo.length < 3) {
+          // 補足3件，優先用R，再用N
+          let needed = 3 - combo.length;
+          for (let i = 0; i < needed; i++) {
+            combo.push('R');
+          }
+        }
+
+        // 計算價格與點數
+        let cost = Math.floor(getDiscountedCost(combo));
+        let gpUsed = Math.max(cost - storePoint, 0);
+        let pointsUsed = Math.min(storePoint, cost);
+
+        if (gpUsed > budget) {
+          $('#result').text('GP 不足以購買 ' + srCount + ' 個 SR (組合購買時超過預算)');
+          return;
+        }
+
+        budget -= gpUsed;
+        storePoint = storePoint - pointsUsed + Math.floor(cost * 0.01);
+        purchaseLog.push({ combo, cost, storePoint });
+
+        remainingSR -= takeSR;
+      }
+
+      // 用剩餘 GP 和商點購買 R 和 N
+      let rest = buyRestWithRN(budget, storePoint);
+
+      let allLogs = purchaseLog.concat(rest.purchaseLog);
+      let totalUsed = purchaseLog.reduce((sum, p) => sum + Math.max(p.cost - (p.storePoint - (sum === 0 ? 0 : purchaseLog[purchaseLog.indexOf(p) - 1].storePoint)), 0), 0) + rest.totalGPUsed;
+
+      $('#result').text(renderResult({
+        purchaseLog: allLogs,
+        totalGPUsed: totalUsed,
+        remainingGP: rest.remainingGP,
+        remainingPoint: rest.remainingPoint
+      }));
+    }
+
     function renderResult(data) {
-      let text = `共使用 GP：${data.totalGPUsed}\n剩餘 GP：${data.remainingGP}\n剩餘商店點數：${data.remainingPoint}\n\n購買順序：\n`;
+      let text = `共使用 GP：${data.totalGPUsed}\n剩餘 GP：${data.remainingGP}\n剩餘商店點數：${data.remainingPoint}\n\n購買記錄：\n`;
       data.purchaseLog.forEach((entry, idx) => {
-        text += `第 ${idx + 1} 次：${entry.combo.join('+')}，花費：${entry.cost}，獲得點數：${entry.storePoint}\n`;
+        text += `第 ${idx + 1} 次：${entry.combo.join('+')}，花費：${entry.cost}，結帳後商點：${entry.storePoint}\n`;
       });
       return text;
     }
 
-    $('#calculateBtn').on('click', function () {
+    $('#generateOptionsBtn').on('click', function () {
       const gp = parseInt($('#gpInput').val(), 10);
-      const result = getMaxCombo(gp);
-      $('#result').text(renderResult(result));
+      const maxSR = Math.floor(gp / PRICES.SR);
+      const container = $('#srOptions');
+      container.empty();
+      container.append('<span>可購買的SR數量：</span>');
+      for (let i = 0; i <= maxSR; i++) {
+        const btn = $('<button>').text(`${i} 個`).on('click', function () {
+          handleSRSelection(i, gp);
+        });
+        container.append(btn).append(' ');
+      }
     });
   </script>
 </body>
