@@ -159,7 +159,7 @@
         remainingSR -= takeSR;
       }
 
-      // 用剩餘 GP 和商點購買 R 和 N
+      // 用剩餘 GP 和點數購買 R 和 N
       let rest = buyRestWithRN(budget, storePoint);
 
       let allLogs = purchaseLog.concat(rest.purchaseLog);
@@ -176,7 +176,7 @@
     function renderResult(data) {
       let text = `共使用 GP：${data.totalGPUsed}\n剩餘 GP：${data.remainingGP}\n剩餘商店點數：${data.remainingPoint}\n\n購買記錄：\n`;
       data.purchaseLog.forEach((entry, idx) => {
-        text += `第 ${idx + 1} 次：${entry.combo.join('+')}，花費：${entry.cost}，結帳後商點：${entry.storePoint}\n`;
+        text += `第 ${idx + 1} 次：${entry.combo.join('+')}，花費：${entry.cost}，結帳後點數：${entry.storePoint}\n`;
       });
       return text;
     }
