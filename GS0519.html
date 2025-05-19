@@ -28,16 +28,29 @@
         const $buy = $('<div class="buy"></div>');
         for (let j = 0; j < inputsPerBuy; j++) {
           const $inputs = $(`
-        <div class="inputs">
-          <label><input class="userCheck" type="checkbox"></label>
-          <input type="text" class="userInput">
-        </div>
-      `);
+          <div class="inputs">
+            <label><input class="userCheck" type="checkbox"></label>
+            <input type="text" class="userInput">
+          </div>
+        `);
           $buy.append($inputs);
         }
         $('.shop').append($buy);
       }
     }
+
+    // 將 getCookie 移出 ready 區塊
+    function getCookie(name) {
+      let cookies = document.cookie.split("; ");
+      for (let i = 0; i < cookies.length; i++) {
+        let parts = cookies[i].split("=");
+        if (parts[0] === name) {
+          return decodeURIComponent(parts[1]);
+        }
+      }
+      return "";
+    }
+
     function loadFromCookie() {
       let inputData = getCookie("userInputs");
       let checkData = getCookie("userChecks");
@@ -61,13 +74,9 @@
       }
     }
 
-
     $(document).ready(function () {
-      // 使用範例：產生 2 個 `.buy` 區塊，每個有 3 個 `.inputs`
-      generateBuyBlocks(7, 5);
-
-      // 載入時從 Cookie 還原
-      loadFromCookie(); // 頁面載入時自動載入 Cookie
+      generateBuyBlocks(7, 5); // 先產生區塊
+      loadFromCookie();        // 然後還原 cookie 資料
 
       // 儲存 Cookie
       $("#saveBtn").click(function () {
@@ -86,18 +95,6 @@
         showNotification("已儲存");
       });
 
-      // 讀取 Cookie
-      function getCookie(name) {
-        let cookies = document.cookie.split("; ");
-        for (let i = 0; i < cookies.length; i++) {
-          let parts = cookies[i].split("=");
-          if (parts[0] === name) {
-            return decodeURIComponent(parts[1]);
-          }
-        }
-        return "";
-      }
-
       // 清除 Cookie
       $("#clearBtn").click(function () {
         document.cookie = "userInputs=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
@@ -110,14 +107,13 @@
       function showNotification(message) {
         let $notification = $("<div class='notification'></div>").text(message);
         $("body").append($notification);
-
         $notification.animate({ top: "-=50px", opacity: 0 }, 700, function () {
           $(this).remove();
         });
       }
-
     });
   </script>
+
 </body>
 
 </html>
