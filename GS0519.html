@@ -11,16 +11,485 @@
 </head>
 
 <body>
-  <div class="btn">
-    <button id="saveBtn">儲存</button>
-    <button id="clearBtn">清除</button>
-  </div>
-  <div class="all">
-    <div class="count">
-      <div class="img"><img src="images/gs.jpg" alt=""></div>
-      <div class="shop"></div>
+  <div class="boxAll">
+    <div class="left">
+      <style>
+        .boxAll {
+          display: flex;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+
+        .left {
+          flex-grow: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .left .lt {
+          flex-grow: 1;
+        }
+
+        .left .lb {
+          min-height: 30vh;
+        }
+
+        .exp {
+          display: flex;
+          gap: 10px;
+          align-items: center;
+        }
+
+        .left h4 {
+          margin: 3px 0;
+        }
+
+        .left .flex {
+          padding: 6px 0;
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+
+        .left input {
+          font-family: inherit;
+          outline: 0;
+          border-radius: 4px;
+          height: 30px;
+          padding: 0 6px;
+          border: 1px solid #383e62;
+        }
+
+        .left button {
+          font-family: inherit;
+          height: 30px;
+          padding: 0 15px;
+          border: 0;
+          outline: 0;
+          background: #383e62;
+          color: #fff;
+          border-radius: 4px;
+        }
+
+        #srSelection,
+        #result {
+          margin-top: 10px;
+        }
+
+        #resultContent {
+          padding: 10px 15px;
+          border-radius: 10px;
+          background: #eee;
+          display: flex;
+          flex-direction: column;
+          width: fit-content;
+        }
+
+        #resultContent p {
+          margin: 0;
+          align-self: flex-start;
+          font-size: 16px;
+          font-weight: normal;
+        }
+      </style>
+      <div class="lt">
+        <h3>格萊德里折扣計算機</h3>
+
+        <div id="gpInput" class="flex">
+          <h4>輸入GP：</h4>
+          <input type="number" id="gpAmount" min="0" placeholder="請輸入GP數量">
+          <button onclick="confirmGP()">確認</button>
+        </div>
+
+        <div id="srSelection" style="display: none;">
+          <h4>選擇SR數量：</h4>
+          <div id="srButtons" class="flex"></div>
+        </div>
+
+        <div id="result" style="display: none;">
+          <div id="resultContent"></div>
+        </div>
+      </div>
+      <div class="lb">
+        <div class="exp"><input type="text" id="expression" placeholder="請輸入算式" /> =
+          <div id="plusResult"></div>
+        </div>
+
+        <script>
+          const input = document.getElementById('expression');
+          const resultDiv = document.getElementById('plusResult');
+
+          input.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+              try {
+                const expression = input.value;
+                // 檢查是否只含數字、加減號與空格
+                if (/^[\d+\-.\s]+$/.test(expression)) {
+                  const sanitized = expression.replace(/\s+/g, '');
+                  const result = eval(sanitized); // 注意：eval 適用於受控用途
+                  resultDiv.textContent = `結果：${result}`;
+                } else {
+                  resultDiv.textContent = '錯誤：只支援數字與 +、- 號';
+                }
+              } catch (e) {
+                resultDiv.textContent = '錯誤：無法計算這個表達式';
+              }
+            }
+          });
+        </script>
+      </div>
+    </div>
+    <div class="right">
+      <div class="btn">
+        <button id="saveBtn">儲存</button>
+        <button id="clearBtn">清除</button>
+      </div>
+      <div class="all">
+        <div class="count">
+          <div class="img"><img src="images/gs.jpg" alt=""></div>
+          <div class="shop"></div>
+        </div>
+      </div>
     </div>
   </div>
+  <script>
+    document.getElementById("gpAmount").addEventListener("keydown", function (event) {
+      if (event.key === "Enter") {
+        confirmGP();
+      }
+    });
+    // 商品價格常數
+    const SR_PRICE = 5000;
+    const R_PRICE = 1500;
+    const N_PRICE = 300;
+
+    // 全局變數
+    // 使用者目前輸入的GP數量
+    let currentGP = 0;
+    // 使用者選擇的SR數量
+    let selectedSR = 0;
+
+    // 確認GP數量
+    // 使用者按下「確認」後，開始進行GP數值驗證與處理邏輯
+    function confirmGP() {
+      const gpInput = document.getElementById('gpAmount');
+      currentGP = parseInt(gpInput.value) || 0;
+
+      if (currentGP <= 0) {
+        alert('請輸入有效的GP數量');
+        return;
+      }
+
+      if (currentGP >= SR_PRICE) {
+        // 顯示SR選擇按鈕
+        showSRSelection();
+        document.getElementById("result").style.display = "none";
+      } else {
+        // 直接計算最佳購買方式
+        calculateBestPurchase(0);
+        document.getElementById("srSelection").style.display = "none";
+      }
+    }
+
+    // 顯示SR選擇按鈕
+    // 顯示可選擇SR數量的按鈕區塊
+    function showSRSelection() {
+      const maxSR = (() => {
+        for (let sr = 50; sr >= 1; sr--) { // 假設最多買 50 個 SR 為上限
+          let cost = 0;
+          if (sr >= 3) {
+            const groupsOf3 = Math.floor(sr / 3);
+            const remainder = sr % 3;
+            cost += groupsOf3 * Math.floor(3 * SR_PRICE * 0.9);
+            if (remainder === 2) cost += Math.floor(2 * SR_PRICE * 0.95);
+            else if (remainder === 1) cost += SR_PRICE;
+          } else if (sr === 2) {
+            cost += Math.floor(2 * SR_PRICE * 0.95);
+          } else if (sr === 1) {
+            cost += SR_PRICE;
+          }
+          if (cost <= currentGP) return sr;
+        }
+        return 0;
+      })();
+      const buttonsDiv = document.getElementById('srButtons');
+      buttonsDiv.innerHTML = '';
+
+      for (let i = 0; i <= maxSR; i++) {
+        const button = document.createElement('button');
+        button.innerText = i + '個';
+        button.onclick = function () {
+          selectedSR = i;
+          calculateBestPurchase(i);
+        };
+        buttonsDiv.appendChild(button);
+      }
+
+      document.getElementById('srSelection').style.display = 'block';
+    }
+
+    // 計算最佳購買方式
+    // 根據SR數量與GP進行最佳購買方式計算
+    function calculateBestPurchase(srCount) {
+      const result = findOptimalPurchaseStrategy(currentGP, srCount);
+      displayResult(result, srCount);
+    }
+
+    // 創建購買對象
+    // 建立一筆購買記錄的物件，用來儲存購買資訊
+    function createPurchase(items, originalCost, discountedCost, pointsUsed, actualCost, pointsEarned, pointsAfter) {
+      return {
+        items: items,
+        originalCost: originalCost,
+        discountedCost: discountedCost,
+        pointsUsed: pointsUsed,
+        actualCost: actualCost,
+        pointsEarned: pointsEarned,
+        pointsAfter: pointsAfter
+      };
+    }
+
+    // 通用找尋最佳購買策略算法
+    // 核心邏輯：根據GP與SR需求計算最佳的購買策略，考慮折扣與點數使用
+    function findOptimalPurchaseStrategy(totalGP, requiredSR, storePoints = 0) {
+      // 初始化變數
+      let purchases = [];
+      let remainingGP = totalGP;
+
+      // 如果指定了SR數量，優先購買
+      if (requiredSR > 0) {
+        // 優先一次購買3個SR直到不足3個為止
+        while (requiredSR >= 3) {
+          const cost = Math.floor(3 * SR_PRICE * 0.9);
+          if (cost <= remainingGP) {
+            const pointsEarned = Math.round(cost * 0.01);
+            const purchase = createPurchase(["SR", "SR", "SR"], 3 * SR_PRICE, cost, 0, cost, pointsEarned, pointsEarned);
+            purchases.push(purchase);
+            remainingGP -= cost;
+            storePoints += pointsEarned;
+            requiredSR -= 3;
+          } else {
+            break;
+          }
+        }
+
+        // 處理剩下1~2個SR，試圖搭配R/N湊成3件或2件折扣組合
+        const srCombos = [];
+        if (requiredSR === 2) {
+          srCombos.push(["SR", "SR", "R"], ["SR", "SR", "N"], ["SR", "SR"]);
+        } else if (requiredSR === 1) {
+          srCombos.push(["SR", "R", "R"], ["SR", "R", "N"], ["SR", "N", "N"], ["SR", "R"], ["SR", "N"]);
+        }
+
+        for (const combo of srCombos) {
+          const originalCost = combo.reduce((sum, item) => sum + (item === "SR" ? SR_PRICE : item === "R" ? R_PRICE : N_PRICE), 0);
+          const discountRate = combo.length === 3 ? 0.9 : 0.95;
+          const discountedCost = Math.floor(originalCost * discountRate);
+          const actualCost = Math.max(0, discountedCost - storePoints);
+          const pointsUsed = discountedCost - actualCost;
+          const pointsEarned = Math.round(actualCost * 0.01);
+          const pointsAfter = storePoints - pointsUsed + pointsEarned;
+
+          if (actualCost <= remainingGP) {
+            const purchase = createPurchase(combo, originalCost, discountedCost, pointsUsed, actualCost, pointsEarned, pointsAfter);
+            purchases.push(purchase);
+            remainingGP -= actualCost;
+            storePoints = pointsAfter;
+            requiredSR = 0;
+            break;
+          }
+        }
+      }
+
+      // 如果還有足夠的GP，繼續購買其他物品
+      if (remainingGP >= N_PRICE || storePoints >= N_PRICE) {
+        // 嘗試所有可能的 3 件組合（R/N混合）
+        const combos = [
+          ["R", "R", "R"],
+          ["R", "R", "N"],
+          ["R", "N", "N"],
+          ["N", "N", "N"]
+        ];
+
+        for (let combo of combos) {
+          const originalCost = combo.reduce((sum, item) => sum + (item === "R" ? R_PRICE : N_PRICE), 0);
+          const discountedCost = Math.floor(originalCost * 0.9);
+          const actualCost = Math.max(0, discountedCost - storePoints);
+          const pointsUsed = discountedCost - actualCost;
+          const pointsEarned = Math.round(actualCost * 0.01);
+          const pointsAfter = storePoints - pointsUsed + pointsEarned;
+
+          if (actualCost <= remainingGP) {
+            const purchase = createPurchase(
+              combo,
+              originalCost,
+              discountedCost,
+              pointsUsed,
+              actualCost,
+              pointsEarned,
+              pointsAfter
+            );
+            purchases.push(purchase);
+            remainingGP -= actualCost;
+            storePoints = pointsAfter;
+
+            // 遞迴處理剩餘
+            const next = findOptimalPurchaseStrategy(remainingGP, 0, storePoints);
+            if (next && next.purchases.length > 0) {
+              purchases = purchases.concat(next.purchases);
+              remainingGP = next.remainingGP;
+              storePoints = next.remainingPoints;
+            }
+
+            return {
+              purchases: purchases,
+              remainingGP: remainingGP,
+              remainingPoints: storePoints,
+              totalSpent: totalGP - remainingGP
+            };
+          }
+        }
+
+        // 若無法湊三件，考慮兩件組合（R+R / R+N / N+N）
+        const twoCombos = [
+          ["R", "R"],
+          ["R", "N"],
+          ["N", "N"]
+        ];
+
+        for (let combo of twoCombos) {
+          const originalCost = combo.reduce((sum, item) => sum + (item === "R" ? R_PRICE : N_PRICE), 0);
+          const discountedCost = Math.floor(originalCost * 0.95);
+          const actualCost = Math.max(0, discountedCost - storePoints);
+          const pointsUsed = discountedCost - actualCost;
+          const pointsEarned = Math.round(actualCost * 0.01);
+          const pointsAfter = storePoints - pointsUsed + pointsEarned;
+
+          if (actualCost <= remainingGP) {
+            const purchase = createPurchase(
+              combo,
+              originalCost,
+              discountedCost,
+              pointsUsed,
+              actualCost,
+              pointsEarned,
+              pointsAfter
+            );
+            purchases.push(purchase);
+            remainingGP -= actualCost;
+            storePoints = pointsAfter;
+
+            const next = findOptimalPurchaseStrategy(remainingGP, 0, storePoints);
+            if (next && next.purchases.length > 0) {
+              purchases = purchases.concat(next.purchases);
+              remainingGP = next.remainingGP;
+              storePoints = next.remainingPoints;
+            }
+
+            return {
+              purchases: purchases,
+              remainingGP: remainingGP,
+              remainingPoints: storePoints,
+              totalSpent: totalGP - remainingGP
+            };
+          }
+        }
+
+        // 最後考慮單件購買（R 或 N）
+        for (let item of ["R", "N"]) {
+          const price = item === "R" ? R_PRICE : N_PRICE;
+          if (remainingGP >= price) {
+            const actualCost = Math.max(0, price - storePoints);
+            const pointsUsed = price - actualCost;
+            const pointsEarned = Math.round(actualCost * 0.01);
+            const pointsAfter = storePoints - pointsUsed + pointsEarned;
+
+            const purchase = createPurchase(
+              [item],
+              price,
+              price,
+              pointsUsed,
+              actualCost,
+              pointsEarned,
+              pointsAfter
+            );
+            purchases.push(purchase);
+            remainingGP -= actualCost;
+            storePoints = pointsAfter;
+
+            const next = findOptimalPurchaseStrategy(remainingGP, 0, storePoints);
+            if (next && next.purchases.length > 0) {
+              purchases = purchases.concat(next.purchases);
+              remainingGP = next.remainingGP;
+              storePoints = next.remainingPoints;
+            }
+
+            return {
+              purchases: purchases,
+              remainingGP: remainingGP,
+              remainingPoints: storePoints,
+              totalSpent: totalGP - remainingGP
+            };
+          }
+        }
+      }
+
+      // 最終回傳結果
+      return {
+        purchases: purchases,
+        remainingGP: remainingGP,
+        remainingPoints: storePoints,
+        totalSpent: totalGP - remainingGP
+      };
+
+    }
+
+    // 顯示結果
+    // 將最佳購買結果顯示在網頁上
+    function displayResult(result, srCount) {
+      const resultDiv = document.getElementById('resultContent');
+
+      if (!result || result.purchases.length === 0) {
+        resultDiv.innerHTML = "<p>無法計算出最佳購買組合，請調整GP數量。</p>";
+        document.getElementById('result').style.display = 'block';
+        return;
+      }
+
+      let html = `<p>${currentGP}GP，${srCount}SR</p>`;
+      html += "<h4>購買方式：</h4>";
+
+      let tempRemainingGP = currentGP;
+      let tempPoints = 0;
+      result.purchases.forEach((purchase, index) => {
+        // 組合物品顯示文字
+        const itemCounts = purchase.items.reduce((acc, item) => {
+          acc[item] = (acc[item] || 0) + 1;
+          return acc;
+        }, {});
+        const itemsText = Object.entries(itemCounts)
+          .map(([item, count]) => (count === 1 ? item : `${count}${item}`))
+          .join('+');
+
+        const beforeTotal = tempRemainingGP + tempPoints;
+        const afterTotal = beforeTotal - purchase.discountedCost;
+        const beforeTotalShow = tempPoints <= 0
+          ? `${tempRemainingGP}`
+          : `( ${tempRemainingGP} + ${tempPoints} )`;
+        html += `<p>第 ${index + 1} 次：${itemsText}，花費：${beforeTotalShow} - ${purchase.discountedCost} = ${afterTotal}，點數：${purchase.pointsEarned}</p>`;
+
+        tempRemainingGP -= purchase.actualCost;
+        tempPoints = purchase.pointsAfter;
+      });
+
+      html += `<br>`;
+      html += `<p>共使用 GP：${result.totalSpent}</p>`;
+      html += `<p>剩餘 GP：${result.remainingGP}</p>`;
+      html += `<p>剩餘點數：${result.remainingPoints}</p>`;
+
+      resultDiv.innerHTML = html;
+      document.getElementById('result').style.display = 'block';
+    }
+  </script>
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script>
     function generateBuyBlocks(buyCount, inputsPerBuy) {
