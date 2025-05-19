@@ -2,8 +2,9 @@
 <html lang="zh-TW">
 
 <head>
-  <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="bookmark" href="favicon.ico">
   <title>格萊德里折扣計算機</title>
 </head>
 
@@ -71,7 +72,8 @@
 
   <div id="gpInput" class="flex">
     <h4>輸入GP：</h4>
-    <input type="number" id="gpAmount" min="0" placeholder="請輸入GP數量">
+    <input type="number" id="gpAmount" min="0" placeholder="請輸入GP數量"
+      style="font-family: emojeeeeee, emojiiiiii, &quot;PingFang TC&quot;, 微軟正黑體, sans-serif;">
     <button onclick="confirmGP()">確認</button>
   </div>
 
@@ -376,6 +378,9 @@
 
     }
 
+
+
+
     // 顯示結果
     // 將最佳購買結果顯示在網頁上
     function displayResult(result, srCount) {
@@ -390,9 +395,27 @@
       let html = `<p>${currentGP}GP，${srCount}SR</p>`;
       html += "<h4>購買方式：</h4>";
 
+      let tempRemainingGP = currentGP;
+      let tempPoints = 0;
       result.purchases.forEach((purchase, index) => {
-        const itemsText = purchase.items.join('+');
-        html += `<p>第 ${index + 1} 次：${itemsText}，花費：${purchase.actualCost}，點數：${purchase.pointsEarned}</p>`;
+        // 組合物品顯示文字
+        const itemCounts = purchase.items.reduce((acc, item) => {
+          acc[item] = (acc[item] || 0) + 1;
+          return acc;
+        }, {});
+        const itemsText = Object.entries(itemCounts)
+          .map(([item, count]) => (count === 1 ? item : `${count}${item}`))
+          .join('+');
+
+        const beforeTotal = tempRemainingGP + tempPoints;
+        const afterTotal = beforeTotal - purchase.actualCost;
+        const beforeTotalShow = tempPoints <= 0
+          ? `${tempRemainingGP}`
+          : `( ${tempRemainingGP} + ${tempPoints} )`;
+        html += `<p>第 ${index + 1} 次：${itemsText}，花費：${beforeTotalShow} - ${purchase.actualCost} = ${afterTotal}，點數：${purchase.pointsEarned}</p>`;
+
+        tempRemainingGP -= purchase.actualCost;
+        tempPoints = purchase.pointsAfter;
       });
 
       html += `<br>`;
