@@ -72,8 +72,7 @@
 
   <div id="gpInput" class="flex">
     <h4>輸入GP：</h4>
-    <input type="number" id="gpAmount" min="0" placeholder="請輸入GP數量"
-      style="font-family: emojeeeeee, emojiiiiii, &quot;PingFang TC&quot;, 微軟正黑體, sans-serif;">
+    <input type="number" id="gpAmount" min="0" placeholder="請輸入GP數量">
     <button onclick="confirmGP()">確認</button>
   </div>
 
@@ -378,9 +377,6 @@
 
     }
 
-
-
-
     // 顯示結果
     // 將最佳購買結果顯示在網頁上
     function displayResult(result, srCount) {
@@ -408,11 +404,11 @@
           .join('+');
 
         const beforeTotal = tempRemainingGP + tempPoints;
-        const afterTotal = beforeTotal - purchase.actualCost;
+        const afterTotal = beforeTotal - purchase.discountedCost;
         const beforeTotalShow = tempPoints <= 0
           ? `${tempRemainingGP}`
           : `( ${tempRemainingGP} + ${tempPoints} )`;
-        html += `<p>第 ${index + 1} 次：${itemsText}，花費：${beforeTotalShow} - ${purchase.actualCost} = ${afterTotal}，點數：${purchase.pointsEarned}</p>`;
+        html += `<p>第 ${index + 1} 次：${itemsText}，花費：${beforeTotalShow} - ${purchase.discountedCost} = ${afterTotal}，點數：${purchase.pointsEarned}</p>`;
 
         tempRemainingGP -= purchase.actualCost;
         tempPoints = purchase.pointsAfter;
