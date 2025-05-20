@@ -1,0 +1,99 @@
+* {
+  box-sizing: border-box;
+  font-family: 'PingFang TC', '微軟正黑體', sans-serif;
+}
+
+.boxAll {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.left {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.left .lt {
+  flex-grow: 1;
+}
+
+.left .lb {
+  min-height: 30vh;
+}
+
+.exp {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.left h4 {
+  margin: 3px 0;
+}
+
+.left .flex {
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.left input {
+  font-family: inherit;
+  outline: 0;
+  border-radius: 4px;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid #383e62;
+}
+
+.left button {
+  font-family: inherit;
+  height: 30px;
+  padding: 0 15px;
+  border: 0;
+  outline: 0;
+  background: #383e62;
+  color: #fff;
+  border-radius: 4px;
+}
+
+#srSelection,
+#result,
+#srSelectionDiv,
+#resultDiv {
+  margin-top: 10px;
+}
+
+#resultText,
+#resultContent {
+  padding: 10px 15px;
+  border-radius: 10px;
+  background: #eee;
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  font-size: 16px;
+  margin: 0;
+}
+
+#resultText p,
+#resultContent p {
+  margin: 0;
+  align-self: flex-start;
+  font-size: 16px;
+  font-weight: normal;
+}
+
+#resultText table {
+  border-collapse: collapse;
+}
+
+#resultText th,
+#resultText td {
+  border: 1px solid #333;
+  padding: 5px 12px;
+  text-align: center;
+}
