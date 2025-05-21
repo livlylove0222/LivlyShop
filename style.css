@@ -51,23 +51,23 @@
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  padding: 13px 16px 11px 15px;
+  padding: 13px 17px 15px 16px;
   width: 100%;
   height: 100%;
-  gap: 14px;
+  gap: 15px;
 }
 
 .buy {
   display: flex;
   justify-content: space-around;
   flex-grow: 1;
-  gap: 12px;
+  gap: 16px;
 }
 
 .inputs {
   display: flex;
   flex-direction: column;
-  padding: 7px 4px 2px;
+  padding: 0 2px 2px;
 }
 
 label {
@@ -109,4 +109,57 @@ p {
   font-size: 14px;
   opacity: 1;
   transition: opacity 0.7s ease-out;
+}
+
+.inputs>label {
+  position: relative;
+  padding-left: 30px;
+  cursor: pointer;
+  font-size: 16px;
+  user-select: none;
+  display: inline-block;
+}
+
+/* 隱藏原生 checkbox */
+.inputs>label input[type="checkbox"] {
+  position: absolute;
+  opacity: 0;
+  cursor: pointer;
+}
+
+/* 外框樣式 */
+.inputs>label .checkmark {
+  position: absolute;
+  top: 2px;
+  left: 0;
+  height: 30px;
+  width: 30px;
+  background-color: #fff;
+  border: 1px solid #000;
+  border-radius: 4px;
+}
+
+/* 勾選時的樣式 */
+.inputs>label input:checked ~ .checkmark {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+}
+
+/* 打勾符號 */
+.inputs>label .checkmark::after {
+  content: "";
+  position: absolute;
+  display: none;
+  left: 8px;
+  top: 3px;
+  width: 7px;
+  height: 13px;
+  border: solid white;
+  border-width: 0 4px 4px 0;
+  transform: rotate(45deg);
+}
+
+/* 顯示勾勾 */
+.inputs>label input:checked ~ .checkmark::after {
+  display: block;
 }

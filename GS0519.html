@@ -35,7 +35,7 @@
         <div class="exp"><input type="text" id="expression" placeholder="輸入算式" /> =
           <div id="plusResult"></div>
         </div>
-
+        <!-- +-計算機 -->
         <script>
           const input = document.getElementById('expression');
           const resultDivPlus = document.getElementById('plusResult');
@@ -73,6 +73,7 @@
       </div>
     </div>
   </div>
+  <!-- 折扣計算機 -->
   <script>
     // 常數設定
     const SR_PRICE = 5000;
@@ -168,8 +169,13 @@
       remainingGP -= firstPurchase.cost;
       points = firstPurchase.points;
 
+      let firstPurchaseAll = firstPurchase.sr + firstPurchase.r + firstPurchase.n
+      console.log('第一次計算的件數:' + firstPurchaseAll);
       // 判斷是否需要進行分次結帳
-      if (firstPurchase.sr + firstPurchase.r + firstPurchase.n > 3) {
+      if (firstPurchaseAll == 1 && firstPurchase.r == 1) {
+        firstPurchase.r--;
+        firstPurchase.n += 5;
+      } else if ((firstPurchaseAll <= 3 && firstPurchase.r > 0) || firstPurchaseAll > 3) {
         // 考慮分次結帳的情況
         needSecondPurchase = checkIfNeedSecondPurchase(firstPurchase, points);
 
@@ -207,79 +213,56 @@
 
       // 先計算可能的折扣
       let discount = 1.0;
-      if (totalItems >= 3) discount = 0.9;
-      else if (totalItems == 2) discount = 0.95;
+      let logMessage = '';
 
-      // 考慮折扣後的SR成本
-      let srCost = Math.floor(sr * SR_PRICE * discount);
-      remainingGP -= srCost;
+      // 檢查能否負擔3件商品獲得9折
+      if (totalItems >= 3 || (totalItems < 3 && gpAmount >= sr * SR_PRICE * 0.9 + (3 - totalItems) * N_PRICE * 0.9)) {
+        discount = 0.9;
+        logMessage = totalItems >= 3 ? '3件9折' : `${totalItems}件湊足3件9折`;
+      }
+      // 檢查能否負擔2件商品獲得95折
+      else if (totalItems == 2 || (totalItems < 2 && gpAmount >= sr * SR_PRICE * 0.95 + (2 - totalItems) * N_PRICE * 0.95)) {
+        discount = 0.95;
+        logMessage = totalItems == 2 ? '2件95折' : `${totalItems}件湊足2件95折`;
+      }
+      // 不能獲得折扣
+      else {
+        logMessage = `${totalItems}件沒折`;
+      }
 
-      // 如果未達到最大折扣，嘗試添加更多商品以獲得更好的折扣
-      if (totalItems < 3 && remainingGP > 0) {
-        // 先計算現有折扣下的總成本
-        let currentTotalCost = sr * SR_PRICE * discount;
+      // 計算折扣後的SR成本
+      remainingGP -= Math.floor(sr * SR_PRICE * discount);
+      console.log(logMessage);
 
-        // 計算如果湊足3件的折扣下總成本
-        let potentialTotalCost = sr * SR_PRICE * 0.9;
-        let potentialSavings = currentTotalCost - potentialTotalCost;
-
-        // 先嘗試添加N來湊足折扣
-        while (totalItems < 3 && remainingGP >= N_PRICE && potentialSavings > 0) {
-          let newDiscount = (totalItems + 1 >= 3) ? 0.9 : 0.95;
-          let newTotalCost = (sr * SR_PRICE + n * N_PRICE + (n + 1) * N_PRICE) * newDiscount;
-          let oldTotalCost = (sr * SR_PRICE + n * N_PRICE) * discount;
-
-          // 如果添加N後總成本降低，則添加
-          if (newTotalCost <= oldTotalCost + N_PRICE) {
-            n++;
-            totalItems++;
-            discount = newDiscount;
-            potentialSavings = (sr * SR_PRICE + n * N_PRICE) * discount - (sr * SR_PRICE + n * N_PRICE) * 0.9;
-          } else {
-            break;
-          }
+      // 決定是否需要湊足3件獲得最大折扣
+      if (totalItems < 3 && remainingGP >= 0) {
+        // 嚐試添加R來湊足3件
+        while (totalItems < 3 && remainingGP >= R_PRICE * discount) {
+          r++;
+          remainingGP -= R_PRICE * discount;
+          totalItems++;
         }
 
-        // 如果仍未達到3件，嘗試添加R
-        while (totalItems < 3 && remainingGP >= R_PRICE && potentialSavings > 0) {
-          let newDiscount = (totalItems + 1 >= 3) ? 0.9 : 0.95;
-          let newTotalCost = (sr * SR_PRICE + n * N_PRICE + r * R_PRICE + R_PRICE) * newDiscount;
-          let oldTotalCost = (sr * SR_PRICE + n * N_PRICE + r * R_PRICE) * discount;
-
-          // 如果添加R後總成本降低，則添加
-          if (newTotalCost <= oldTotalCost + R_PRICE) {
-            r++;
-            totalItems++;
-            discount = newDiscount;
-            potentialSavings = (sr * SR_PRICE + n * N_PRICE + r * R_PRICE) * discount - (sr * SR_PRICE + n * N_PRICE + r * R_PRICE) * 0.9;
-          } else {
-            break;
-          }
+        // 如果仍不足3件，嚐試添加N
+        while (totalItems < 3 && remainingGP >= N_PRICE * discount) {
+          n++;
+          remainingGP -= N_PRICE * discount;
+          totalItems++;
         }
       }
 
-      // 重新計算折扣後的總成本
-      let totalCost = (sr * SR_PRICE + r * R_PRICE + n * N_PRICE) * discount;
-      remainingGP = gpAmount - Math.floor(totalCost - usedPoints);
-
-      // 如果還有剩餘GP，繼續優化購買
+      // 如果還有剩餘GP且已經湊足3件（或已不可能湊足），繼續優化
       if (remainingGP > 0) {
         // 優先購買R（因為通常比N划算）
-        let additionalR = Math.floor(remainingGP / R_PRICE);
+        let additionalR = Math.floor(remainingGP / (R_PRICE * discount));
         r += additionalR;
-        remainingGP -= additionalR * R_PRICE;
+        remainingGP -= additionalR * R_PRICE * discount;
 
         // 有餘力再買N
-        let additionalN = Math.floor(remainingGP / N_PRICE);
+        let additionalN = Math.floor(remainingGP / (N_PRICE * discount));
         n += additionalN;
-        remainingGP -= additionalN * N_PRICE;
+        remainingGP -= additionalN * N_PRICE * discount;
       }
-
-      // 最終計算實際花費與獲得的點數
-      totalItems = sr + r + n;
-      discount = 1.0;
-      if (totalItems >= 3) discount = 0.9;
-      else if (totalItems == 2) discount = 0.95;
 
       const originalCost = sr * SR_PRICE + r * R_PRICE + n * N_PRICE;
       const finalCost = Math.floor(originalCost * discount - usedPoints);
@@ -295,37 +278,44 @@
         usedPoints: usedPoints
       };
     }
+
     // 檢查是否需要分次結帳
     function checkIfNeedSecondPurchase(firstPurchase, points) {
       const totalItems = firstPurchase.sr + firstPurchase.r + firstPurchase.n;
 
-      // 第一次購買3件或以下，不需要第二次
-      if (totalItems <= 3) {
+      // 第一次購買全為SR，不需要第二次
+      if (totalItems == firstPurchase.sr) {
+        console.log('第一次購買全為SR，不需要第二次');
         return false;
       }
 
-      // 第一次購買全為SR，不需要第二次
-      if (totalItems == firstPurchase.sr) {
-        return false;
+      // 第一次購買3件或以下，但有R
+      if (totalItems <= 3 && firstPurchase.r > 0) {
+        console.log('第一次購買3件或以下，但有R');
+        return true;
       }
 
       // 扣掉3件後N數量>=3
-      if (totalItems >= 3 && firstPurchase.n >= 3) {
+      if (totalItems > 5 && firstPurchase.n >= 3) {
+        console.log('扣掉3件後N數量>=3');
         return true;
       }
 
       // 含R
       if (firstPurchase.r > 0) {
+        console.log('含R');
         return true;
       }
 
       // 第一次總件數>=5且點數>66
-      if (totalItems >= 5 && points > 66) {
+      if (totalItems >= 5 && points > 36) {
+        console.log('第一次總件數>=5且點數>36');
         return true;
       }
 
       // 點數>33
       if (points > 33) {
+        console.log('點數>33');
         return true;
       }
 
@@ -338,8 +328,18 @@
       let second = { sr: 0, r: 0, n: 0, cost: 0, points: 0, usedPoints: 0 };
       const totalItems = firstPurchase.sr + firstPurchase.r + firstPurchase.n;
 
+      // 第一次購買3件或以下，但有R
+      if (totalItems == 1 && firstPurchase.r > 0) {
+        adjustedFirst.r -= 1;
+        adjustedFirst.n += 3;
+        second.n = 2;
+      } else if (totalItems >= 2 && firstPurchase.r > 0) {
+        adjustedFirst.r -= 1;
+        adjustedFirst.n += 2;
+        second.n = 3;
+      }
       // 扣掉3件後N數量>=3
-      if (firstPurchase.n >= 3) {
+      else if (totalItems > 5 && firstPurchase.n >= 3) {
         adjustedFirst.n -= 3;
         second.n = 3;
       }
@@ -349,8 +349,8 @@
         adjustedFirst.n += 2;
         second.n = 3;
       }
-      // 第一次總件數>=5且點數>66
-      else if (totalItems >= 5 && points > 66) {
+      // 第一次總件數>=5且點數>36
+      else if (totalItems >= 5 && points > 36) {
         adjustedFirst.n -= 2;
         second.n = 2;
       }
@@ -404,17 +404,21 @@
       // 檢查剩餘GP+點數是否超過299
       if (remainingGP + remainingPoints > 299) {
         // 需要回溯調整，增加第一次購買
-        if (remainingGP >= N_PRICE) {
+        if (remainingGP >= N_PRICE * 0.9) {
           // 可以再買N
           const additionalN = Math.min(
-            Math.floor(remainingGP / N_PRICE),
-            Math.ceil((remainingGP + remainingPoints - 299) / N_PRICE)
+            Math.floor(remainingGP / (N_PRICE * 0.9)),
+            Math.ceil((remainingGP + remainingPoints - 299) / (N_PRICE * 0.9))
           );
 
           adjustedFirst.n += additionalN;
 
           // 重新計算第一次購買
           const firstTotalItems = adjustedFirst.sr + adjustedFirst.r + adjustedFirst.n;
+          if (adjustedFirst.n >= 5) {
+            adjustedFirst.r++;
+            adjustedFirst.n -= 5;
+          }
           let firstDiscount = 1.0;
           if (firstTotalItems >= 3) firstDiscount = 0.9;
           else if (firstTotalItems == 2) firstDiscount = 0.95;
@@ -491,6 +495,7 @@
       return parts.join("+");
     }
   </script>
+  <!-- 道具確認 -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script>
     function generateBuyBlocks(buyCount, inputsPerBuy) {
@@ -499,7 +504,7 @@
         for (let j = 0; j < inputsPerBuy; j++) {
           const $inputs = $(`
           <div class="inputs">
-            <label><input class="userCheck" type="checkbox"></label>
+            <label><input class="userCheck" type="checkbox"><span class="checkmark"></span></label>
             <input type="text" class="userInput">
           </div>
         `);
