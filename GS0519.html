@@ -67,7 +67,7 @@
       </div>
       <div class="all">
         <div class="count">
-          <div class="img"><img src="images/gs.jpg" alt=""></div>
+          <div class="img"><img src="images/gs0519.jpg" alt=""></div>
           <div class="shop"></div>
         </div>
       </div>
@@ -498,14 +498,14 @@
   <!-- 道具確認 -->
   <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
   <script>
-    function generateBuyBlocks(buyCount, inputsPerBuy) {
-      for (let i = 0; i < buyCount; i++) {
+    function generateBuyBlocks(blockSizes) {
+      for (let i = 0; i < blockSizes.length; i++) {
         const $buy = $('<div class="buy"></div>');
-        for (let j = 0; j < inputsPerBuy; j++) {
+        for (let j = 0; j < blockSizes[i]; j++) {
           const $inputs = $(`
           <div class="inputs">
             <label><input class="userCheck" type="checkbox"><span class="checkmark"></span></label>
-            <input type="text" class="userInput">
+            <input type="number" class="userInput">
           </div>
         `);
           $buy.append($inputs);
@@ -514,7 +514,6 @@
       }
     }
 
-    // 將 getCookie 移出 ready 區塊
     function getCookie(name) {
       let cookies = document.cookie.split("; ");
       for (let i = 0; i < cookies.length; i++) {
@@ -549,8 +548,10 @@
       }
     }
 
+
     $(document).ready(function () {
-      generateBuyBlocks(7, 5); // 先產生區塊
+      // 產生3個區塊，分別有10個、16個和9個輸入元素
+      generateBuyBlocks([10, 16, 9]);
       loadFromCookie();        // 然後還原 cookie 資料
 
       // 儲存 Cookie
