@@ -401,6 +401,13 @@
         remainingPoints = adjustedSecond.points;
       }
 
+      //超過5N+1R
+      if (adjustedFirst.n >= 5) {
+        console.log('超過5N+1R')
+        adjustedFirst.r++;
+        adjustedFirst.n -= 5;
+      }
+
       // 檢查剩餘GP+點數是否超過299
       if (remainingGP + remainingPoints > 299) {
         // 需要回溯調整，增加第一次購買
@@ -415,6 +422,7 @@
 
           // 重新計算第一次購買
           const firstTotalItems = adjustedFirst.sr + adjustedFirst.r + adjustedFirst.n;
+          //超過5N+1R
           if (adjustedFirst.n >= 5) {
             adjustedFirst.r++;
             adjustedFirst.n -= 5;
