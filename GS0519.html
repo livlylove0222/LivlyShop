@@ -32,10 +32,108 @@
         </div>
       </div>
       <div class="lb">
+        <!-- 快速GP計算 -->
+        <div class="calculator">
+          <div class="column">
+            <button class="btn-plus" data-type="sr">▲</button>
+            <div class="item">
+              <span class="quantity" id="sr-qty">1</span>SR
+            </div>
+            <button class="btn-minus" data-type="sr">▼</button>
+          </div>
+          <div class="column">
+            <button class="btn-plus" data-type="r">▲</button>
+            <div class="item">
+              <span class="quantity" id="r-qty">1</span>R
+            </div>
+            <button class="btn-minus" data-type="r">▼</button>
+          </div>
+          <div class="column">
+            <button class="btn-plus" data-type="n">▲</button>
+            <div class="item">
+              <span class="quantity" id="n-qty">1</span>N
+            </div>
+            <button class="btn-minus" data-type="n">▼</button>
+          </div>
+          <div class="column">
+            <div class="result">
+              =　<span id="total-items">3</span>項，合計<span id="total-amount">6800</span>
+            </div>
+          </div>
+        </div>
+        <script>
+          // 價格設定
+          const prices = {
+            sr: 5000,
+            r: 1500,
+            n: 300
+          };
+
+          // 數量設定
+          let quantities = {
+            sr: 1,
+            r: 1,
+            n: 1
+          };
+
+          // 更新顯示
+          function updateDisplay() {
+            // 更新各項數量顯示
+            document.getElementById('sr-qty').textContent = quantities.sr;
+            document.getElementById('r-qty').textContent = quantities.r;
+            document.getElementById('n-qty').textContent = quantities.n;
+
+            // 計算總項目數
+            let totalItems = quantities.sr + quantities.r + quantities.n;
+            document.getElementById('total-items').textContent = totalItems;
+
+            // 計算總金額
+            let totalAmount = quantities.sr * prices.sr + quantities.r * prices.r + quantities.n * prices.n;
+            if (totalItems == 2) { totalAmount = totalAmount * 0.95; }
+            else if (totalItems >= 3) { totalAmount = totalAmount * 0.9; }
+            document.getElementById('total-amount').textContent = totalAmount.toLocaleString();;
+          }
+
+          // 增加數量
+          function increaseQuantity(type) {
+            quantities[type]++;
+            updateDisplay();
+          }
+
+          // 減少數量
+          function decreaseQuantity(type) {
+            if (quantities[type] > 0) {
+              quantities[type]--;
+              updateDisplay();
+            }
+          }
+
+          // 綁定事件監聽器
+          document.addEventListener('DOMContentLoaded', function () {
+            // 綁定加號按鈕
+            document.querySelectorAll('.btn-plus').forEach(button => {
+              button.addEventListener('click', function () {
+                const type = this.getAttribute('data-type');
+                increaseQuantity(type);
+              });
+            });
+
+            // 綁定減號按鈕
+            document.querySelectorAll('.btn-minus').forEach(button => {
+              button.addEventListener('click', function () {
+                const type = this.getAttribute('data-type');
+                decreaseQuantity(type);
+              });
+            });
+
+            // 初始化顯示
+            updateDisplay();
+          });
+        </script>
+        <!-- +-計算機 -->
         <div class="exp"><input type="text" id="expression" placeholder="輸入算式" /> =
           <div id="plusResult"></div>
         </div>
-        <!-- +-計算機 -->
         <script>
           const input = document.getElementById('expression');
           const resultDivPlus = document.getElementById('plusResult');

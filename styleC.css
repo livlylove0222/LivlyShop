@@ -15,7 +15,7 @@
 }
 
 .left .lb {
-  min-height: 30vh;
+  min-height: 45%;
 }
 
 .exp {
@@ -91,4 +91,31 @@
   border: 1px solid #333;
   padding: 5px 12px;
   text-align: center;
+}
+
+.calculator {
+  display: flex;
+  gap: 17px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.item {
+  display: flex;
+  height: 30px;
+  align-items: center;
+  gap: 2px;
+  font-weight: bold;
+}
+
+.result {
+  display: flex;
+  gap: 4px;
+  font-weight: bold;
 }

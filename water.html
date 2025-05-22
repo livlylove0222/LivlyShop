@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>喝水提醒小工具</title>
+    <style>
+        body {
+            font-family: 'Microsoft JhengHei', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 400px;
+            width: 100%;
+        }
+        
+        .water-icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            color: #1976d2;
+            margin-bottom: 20px;
+            font-size: 24px;
+        }
+        
+        .timer-section {
+            margin: 20px 0;
+        }
+        
+        .timer-display {
+            font-size: 36px;
+            color: #2196f3;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+        
+        .controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            font-family: inherit;
+        }
+        
+        .time-btn {
+            background: #e3f2fd;
+            color: #1976d2;
+            border: 2px solid #2196f3;
+        }
+        
+        .time-btn:hover {
+            background: #2196f3;
+            color: white;
+        }
+        
+        .time-btn.active {
+            background: #2196f3;
+            color: white;
+        }
+        
+        .control-btn {
+            background: #4caf50;
+            color: white;
+            min-width: 80px;
+        }
+        
+        .control-btn:hover {
+            background: #45a049;
+        }
+        
+        .control-btn:disabled {
+            background: #cccccc;
+            cursor: not-allowed;
+        }
+        
+        .pause-btn {
+            background: #ff9800;
+        }
+        
+        .pause-btn:hover {
+            background: #f57c00;
+        }
+        
+        .reset-btn {
+            background: #f44336;
+        }
+        
+        .reset-btn:hover {
+            background: #d32f2f;
+        }
+        
+        .reminder-popup {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            border: 3px solid #2196f3;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            z-index: 1000;
+            display: none;
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(100%);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        .reminder-popup h3 {
+            margin: 0 0 10px 0;
+            color: #1976d2;
+        }
+        
+        .reminder-popup p {
+            margin: 10px 0;
+            color: #666;
+        }
+        
+        .close-reminder {
+            background: #2196f3;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+        
+        .close-reminder:hover {
+            background: #1976d2;
+        }
+        
+        .status {
+            margin: 15px 0;
+            font-size: 16px;
+            color: #666;
+        }
+        
+        .running {
+            color: #4caf50;
+        }
+        
+        .paused {
+            color: #ff9800;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="water-icon">💧</div>
+        <h1>喝水提醒小工具</h1>
+        
+        <div class="timer-section">
+            <div class="timer-display" id="timeDisplay">00:00</div>
+            <div class="status" id="status">選擇提醒間隔時間</div>
+        </div>
+        
+        <div class="controls">
+            <button class="time-btn" onclick="setTimer(10)">10分鐘</button>
+            <button class="time-btn" onclick="setTimer(15)">15分鐘</button>
+            <button class="time-btn" onclick="setTimer(20)">20分鐘</button>
+            <button class="time-btn" onclick="setTimer(30)">30分鐘</button>
+        </div>
+        
+        <div class="controls">
+            <button class="control-btn" id="startBtn" onclick="startTimer()" disabled>開始</button>
+            <button class="control-btn pause-btn" id="pauseBtn" onclick="pauseTimer()" disabled>暫停</button>
+            <button class="control-btn reset-btn" id="resetBtn" onclick="resetTimer()" disabled>重設</button>
+        </div>
+    </div>
+    
+    <div class="reminder-popup" id="reminderPopup">
+        <h3>💧 該喝水囉！</h3>
+        <p>記得補充水分，保持身體健康～</p>
+        <button class="close-reminder" onclick="closeReminder()">我知道了</button>
+    </div>
+    
+    <script>
+        let timerInterval;
+        let totalSeconds = 0;
+        let currentSeconds = 0;
+        let isRunning = false;
+        let isPaused = false;
+        
+        function setTimer(minutes) {
+            totalSeconds = minutes * 60;
+            currentSeconds = totalSeconds;
+            updateDisplay();
+            updateStatus(`已設定 ${minutes} 分鐘提醒`);
+            
+            // 更新按鈕狀態
+            document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
+            event.target.classList.add('active');
+            
+            // 啟用控制按鈕
+            document.getElementById('startBtn').disabled = false;
+            document.getElementById('pauseBtn').disabled = true;
+            document.getElementById('resetBtn').disabled = false;
+            
+            // 如果正在運行，先停止
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+            }
+        }
+        
+        function startTimer() {
+            if (totalSeconds === 0) return;
+            
+            isRunning = true;
+            isPaused = false;
+            
+            timerInterval = setInterval(() => {
+                currentSeconds--;
+                updateDisplay();
+                
+                if (currentSeconds <= 0) {
+                    showReminder();
+                    resetTimer();
+                }
+            }, 1000);
+            
+            updateStatus('計時進行中...');
+            document.getElementById('startBtn').disabled = true;
+            document.getElementById('pauseBtn').disabled = false;
+        }
+        
+        function pauseTimer() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                isPaused = true;
+                updateStatus('已暫停');
+                document.getElementById('startBtn').disabled = false;
+                document.getElementById('pauseBtn').disabled = true;
+            }
+        }
+        
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            isPaused = false;
+            currentSeconds = totalSeconds;
+            updateDisplay();
+            updateStatus(totalSeconds > 0 ? '已重設計時器' : '選擇提醒間隔時間');
+            
+            document.getElementById('startBtn').disabled = totalSeconds === 0;
+            document.getElementById('pauseBtn').disabled = true;
+        }
+        
+        function updateDisplay() {
+            const minutes = Math.floor(currentSeconds / 60);
+            const seconds = currentSeconds % 60;
+            document.getElementById('timeDisplay').textContent = 
+                `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+        }
+        
+        function updateStatus(message) {
+            const statusElement = document.getElementById('status');
+            statusElement.textContent = message;
+            
+            // 更新狀態樣式
+            statusElement.classList.remove('running', 'paused');
+            if (isRunning) {
+                statusElement.classList.add('running');
+            } else if (isPaused) {
+                statusElement.classList.add('paused');
+            }
+        }
+        
+        function showReminder() {
+            const popup = document.getElementById('reminderPopup');
+            popup.style.display = 'block';
+            
+            // 播放提示音（如果瀏覽器支援）
+            try {
+                const audio = new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmggBjiS2/LVfC0FK4LO8tqJNwgZaaLvpltOEAk1s4qJbmJcVKa9sJBiNyMcO4KmtcKWTwsFLIHM8tiJOQkZab3xvWk1FAg6l+fu0oIyBi/e+/PLe');
+                audio.play().catch(() => {});
+            } catch (e) {}
+        }
+        
+        function closeReminder() {
+            document.getElementById('reminderPopup').style.display = 'none';
+            
+            // 自動重新開始計時
+            if (totalSeconds > 0) {
+                currentSeconds = totalSeconds;
+                updateDisplay();
+                startTimer();
+            }
+        }
+        
+        // 頁面載入時初始化
+        window.onload = function() {
+            updateDisplay();
+        };
+        
+        // 防止頁面意外關閉
+        window.addEventListener('beforeunload', function(e) {
+            if (isRunning) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        });
+    </script>
+</body>
+</html>
