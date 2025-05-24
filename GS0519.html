@@ -774,10 +774,6 @@
       // 添加到 body
       document.body.appendChild(notification);
 
-      // 方法一：使用 CSS transition（需要預先定義 CSS 樣式）
-      notification.style.transform = "translateY(-50px)";
-      notification.style.opacity = "0";
-
       // 動畫結束後移除元素
       setTimeout(() => {
         notification.remove();
