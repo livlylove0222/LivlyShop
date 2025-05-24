@@ -703,7 +703,7 @@
       expires.setTime(expires.getTime() + (14 * 24 * 60 * 60 * 1000)); // 14天
       document.cookie = `shoppingData=${JSON.stringify(data)}; expires=${expires.toUTCString()}; path=/`;
 
-      alert('資料已儲存！');
+      showNotification("已儲存");
     }
 
     // 從Cookie載入
@@ -741,6 +741,7 @@
           input.value = shoppingData.inputs[index];
         }
       });
+      showNotification("已載入");
     }
 
     // 清除Cookie
@@ -756,13 +757,32 @@
         input.value = '';
       });
 
-      alert('資料已清除！');
+      showNotification("已清除");
     }
 
     // 頁面載入時自動產生預設項目
     window.onload = function () {
       generateItems();
     };
+
+    function showNotification(message) {
+      // 創建通知元素
+      let notification = document.createElement("div");
+      notification.className = "notification";
+      notification.textContent = message;
+
+      // 添加到 body
+      document.body.appendChild(notification);
+
+      // 方法一：使用 CSS transition（需要預先定義 CSS 樣式）
+      notification.style.transform = "translateY(-50px)";
+      notification.style.opacity = "0";
+
+      // 動畫結束後移除元素
+      setTimeout(() => {
+        notification.remove();
+      }, 700);
+    }
   </script>
 
 </body>
