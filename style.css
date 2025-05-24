@@ -3,6 +3,16 @@
   font-family: 'PingFang TC', '微軟正黑體', sans-serif;
 }
 
+body {
+  margin: 0;
+  background: #323339;
+  color: #e1e1e1;
+}
+
+#controls {
+  margin-top: 15px;
+}
+
 .btn {
   margin: 0 auto;
   display: flex;
@@ -11,16 +21,19 @@
   padding: 5px;
 }
 
-.btn button {
-  background: #140a56;
-  color: #fff;
-  height: 36px;
-  padding: 0 20px;
-  display: flex;
-  text-align: center;
-  align-items: center;
-  border: 0;
-  border-radius: 8px;
+button {
+  background: #1b1c23;
+  color: #e1e1e1;
+  height: 30px;
+  padding: 0 15px;
+  border: 1px solid;
+  font-weight: bold;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #484b5c;
 }
 
 .all {
@@ -70,34 +83,28 @@
 }
 
 .item-img {
-    display: flex;
-    align-items: center;
-    width: 100px;
-    height: 100px;
-    border-radius: 8px;
-    overflow: hidden;
+  display: flex;
+  align-items: center;
+  width: 100px;
+  height: 100px;
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .item-img img {
-    max-width: 100%;
+  max-width: 100%;
 }
 
 .item-box {
-    position: absolute;
-    height: 100%;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    padding: 0 2px 2px;
-    z-index: 999;
-    top: 0;
-    left: 0;
-}
-
-label {
-  text-align: left;
-  flex-grow: 1;
-  padding: 0 2px;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 2px;
+  z-index: 999;
+  top: 0;
+  left: 0;
 }
 
 .item-box>input {
@@ -106,9 +113,9 @@ label {
   border: 0;
   background: transparent;
   color: #000;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: bold;
-  padding: 3px 5px 0;
+  padding: 0;
   outline: 0;
   margin-left: auto;
   box-shadow: none;
@@ -157,11 +164,12 @@ p {
 }
 
 @keyframes notianima {
-  from{
+  from {
     top: 35px;
     opacity: 1;
   }
-  to{
+
+  to {
     top: -50px;
     opacity: 0;
   }
@@ -169,11 +177,8 @@ p {
 
 .item-box>label {
   position: relative;
-  padding-left: 30px;
   cursor: pointer;
-  font-size: 16px;
-  user-select: none;
-  display: inline-block;
+  flex-grow: 1;
 }
 
 /* 隱藏原生 checkbox */
@@ -186,10 +191,10 @@ p {
 /* 外框樣式 */
 .item-box>label .checkmark {
   position: absolute;
-  top: 2px;
-  left: 0;
   height: 25px;
   width: 25px;
+  top: 2px;
+  left: 2px;
   background-color: #fff;
   border: 1px solid #000;
   border-radius: 4px;
