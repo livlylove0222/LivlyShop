@@ -159,16 +159,19 @@
       </div>
     </div>
     <div class="right">
-      <div class="btn">
-        <button id="saveBtn">儲存</button>
-        <button id="clearBtn">清除</button>
-      </div>
-      <div class="all">
-        <div class="count">
-          <div class="img"><img src="images/gs0519.jpg" alt=""></div>
-          <div class="shop"></div>
+      <div id="controls">
+        <div class="btn">
+          <button onclick="sortByNumber()">依數量排序</button>
+          <button onclick="resetOrder()">恢復預設順序</button>
+        </div>
+        <div class="btn">
+          <button onclick="saveToCookie()">儲存資料</button>
+          <button onclick="loadFromCookie()">載入資料</button>
+          <button onclick="clearCookie()">清除資料</button>
         </div>
       </div>
+
+      <div id="container" class="buy"></div>
     </div>
   </div>
   <!-- 折扣計算機 -->
@@ -500,7 +503,7 @@
       }
 
       //超過5N+1R
-      if (adjustedFirst.sr + adjustedFirst.r + adjustedFirst.n>=6 && adjustedFirst.n >= 5) {
+      if (adjustedFirst.sr + adjustedFirst.r + adjustedFirst.n >= 6 && adjustedFirst.n >= 5) {
         console.log('超過5N+1R')
         adjustedFirst.r++;
         adjustedFirst.n -= 5;
@@ -602,98 +605,164 @@
     }
   </script>
   <!-- 道具確認 -->
-  <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
   <script>
-    function generateBuyBlocks(blockSizes) {
-      for (let i = 0; i < blockSizes.length; i++) {
-        const $buy = $('<div class="buy"></div>');
-        for (let j = 0; j < blockSizes[i]; j++) {
-          const $inputs = $(`
-          <div class="inputs">
-            <label><input class="userCheck" type="checkbox"><span class="checkmark"></span></label>
-            <input type="number" class="userInput">
-          </div>
-        `);
-          $buy.append($inputs);
-        }
-        $('.shop').append($buy);
+    let defaultOrder = [];
+    let currentItems = [];
+
+    // 產生指定數量的項目
+    function generateItems() {
+      const count = 35; //項目數量
+      const container = document.getElementById('container');
+      container.innerHTML = '';
+
+      defaultOrder = [];
+      currentItems = [];
+
+      for (let i = 1; i <= count; i++) {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'inputs';
+        itemDiv.dataset.originalIndex = i;
+
+        itemDiv.innerHTML = `
+                    <div class="item-img">
+                      <img src="images/gs0519/img-${i}.jpg" alt="項目 ${i}">
+                    </div>
+                    <div class="item-box">
+                      <label>
+                        <input class="userCheck" type="checkbox" data-index="${i}">
+                        <span class="checkmark"></span>
+                      </label>
+                      <input type="number" class="userInput" data-index="${i}" min="0">
+                    </div>
+                `;
+
+        container.appendChild(itemDiv);
+        defaultOrder.push(i);
+        currentItems.push({
+          element: itemDiv,
+          originalIndex: i
+        });
       }
+
+      // 載入已儲存的資料
+      loadFromCookie();
     }
 
-    function getCookie(name) {
-      let cookies = document.cookie.split("; ");
-      for (let i = 0; i < cookies.length; i++) {
-        let parts = cookies[i].split("=");
-        if (parts[0] === name) {
-          return decodeURIComponent(parts[1]);
-        }
-      }
-      return "";
+    // 依數量排序（由大到小）
+    function sortByNumber() {
+      const container = document.getElementById('container');
+      const items = Array.from(container.children);
+
+      items.sort((a, b) => {
+        const aValue = parseInt(a.querySelector('.userInput').value) || 0;
+        const bValue = parseInt(b.querySelector('.userInput').value) || 0;
+        return bValue - aValue; // 由大到小排序
+      });
+
+      // 重新排列DOM
+      items.forEach(item => container.appendChild(item));
     }
 
+    // 恢復預設順序
+    function resetOrder() {
+      const container = document.getElementById('container');
+      const items = Array.from(container.children);
+
+      items.sort((a, b) => {
+        const aIndex = parseInt(a.dataset.originalIndex);
+        const bIndex = parseInt(b.dataset.originalIndex);
+        return aIndex - bIndex;
+      });
+
+      // 重新排列DOM
+      items.forEach(item => container.appendChild(item));
+    }
+
+    // 儲存到Cookie
+    function saveToCookie() {
+      const data = {
+        checkboxes: {},
+        inputs: {}
+      };
+
+      // 收集checkbox狀態
+      document.querySelectorAll('.userCheck').forEach(checkbox => {
+        const index = checkbox.dataset.index;
+        data.checkboxes[index] = checkbox.checked;
+      });
+
+      // 收集input值
+      document.querySelectorAll('.userInput').forEach(input => {
+        const index = input.dataset.index;
+        data.inputs[index] = input.value;
+      });
+
+      // 設定Cookie (14天期限)
+      const expires = new Date();
+      expires.setTime(expires.getTime() + (14 * 24 * 60 * 60 * 1000)); // 14天
+      document.cookie = `shoppingData=${JSON.stringify(data)}; expires=${expires.toUTCString()}; path=/`;
+
+      alert('資料已儲存！');
+    }
+
+    // 從Cookie載入
     function loadFromCookie() {
-      let inputData = getCookie("userInputs");
-      let checkData = getCookie("userChecks");
+      const cookies = document.cookie.split(';');
+      let shoppingData = null;
 
-      if (inputData) {
-        let inputs = JSON.parse(inputData);
-        $(".userInput").each(function (index) {
-          if (inputs[index] !== undefined) {
-            $(this).val(inputs[index]);
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'shoppingData') {
+          try {
+            shoppingData = JSON.parse(decodeURIComponent(value));
+          } catch (e) {
+            console.error('Cookie解析錯誤:', e);
+            return;
           }
-        });
+          break;
+        }
       }
 
-      if (checkData) {
-        let checks = JSON.parse(checkData);
-        $(".userCheck").each(function (index) {
-          if (checks[index] !== undefined) {
-            $(this).prop("checked", checks[index] === 1);
-          }
-        });
-      }
+      if (!shoppingData) return;
+
+      // 恢復checkbox狀態
+      Object.keys(shoppingData.checkboxes).forEach(index => {
+        const checkbox = document.querySelector(`.userCheck[data-index="${index}"]`);
+        if (checkbox) {
+          checkbox.checked = shoppingData.checkboxes[index];
+        }
+      });
+
+      // 恢復input值
+      Object.keys(shoppingData.inputs).forEach(index => {
+        const input = document.querySelector(`.userInput[data-index="${index}"]`);
+        if (input) {
+          input.value = shoppingData.inputs[index];
+        }
+      });
     }
 
+    // 清除Cookie
+    function clearCookie() {
+      document.cookie = 'shoppingData=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
 
-    $(document).ready(function () {
-      // 產生3個區塊，分別有10個、16個和9個輸入元素
-      generateBuyBlocks([10, 16, 9]);
-      loadFromCookie();        // 然後還原 cookie 資料
-
-      // 儲存 Cookie
-      $("#saveBtn").click(function () {
-        let inputs = [];
-        $(".userInput").each(function () {
-          inputs.push($(this).val());
-        });
-
-        let checks = [];
-        $(".userCheck").each(function () {
-          checks.push($(this).prop("checked") ? 1 : 0);
-        });
-
-        document.cookie = "userInputs=" + JSON.stringify(inputs) + "; path=/";
-        document.cookie = "userChecks=" + JSON.stringify(checks) + "; path=/";
-        showNotification("已儲存");
+      // 清除頁面上的所有勾選和輸入
+      document.querySelectorAll('.userCheck').forEach(checkbox => {
+        checkbox.checked = false;
       });
 
-      // 清除 Cookie
-      $("#clearBtn").click(function () {
-        document.cookie = "userInputs=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        document.cookie = "userChecks=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        $(".userInput").val("");
-        $(".userCheck").prop("checked", false);
-        showNotification("已清除");
+      document.querySelectorAll('.userInput').forEach(input => {
+        input.value = '';
       });
 
-      function showNotification(message) {
-        let $notification = $("<div class='notification'></div>").text(message);
-        $("body").append($notification);
-        $notification.animate({ top: "-=50px", opacity: 0 }, 700, function () {
-          $(this).remove();
-        });
-      }
-    });
+      alert('資料已清除！');
+    }
+
+    // 頁面載入時自動產生預設項目
+    window.onload = function () {
+      generateItems();
+    };
   </script>
 
 </body>

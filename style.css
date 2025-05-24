@@ -59,17 +59,39 @@
 .buy {
   display: flex;
   flex-wrap: wrap;
-  gap: 11px;
+  gap: 12px;
   align-content: flex-start;
+  width: 548px;
+  margin: 15px 30px;
 }
 
 .inputs {
-  display: flex;
-  flex: 0 0 89px;
-  /* 每行5個，每個佔20%寬度，減去間距 */
-  height: 89px;
-  flex-direction: column;
-  padding: 0 2px 2px;
+  position: relative;
+}
+
+.item-img {
+    display: flex;
+    align-items: center;
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.item-img img {
+    max-width: 100%;
+}
+
+.item-box {
+    position: absolute;
+    height: 100%;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 0 2px 2px;
+    z-index: 999;
+    top: 0;
+    left: 0;
 }
 
 label {
@@ -78,7 +100,7 @@ label {
   padding: 0 2px;
 }
 
-.inputs>input {
+.item-box>input {
   width: 100%;
   text-align: right;
   border: 0;
@@ -97,20 +119,20 @@ label {
 }
 
 /* 隱藏Chrome、Safari、Edge、Opera的上下箭頭 */
-.inputs>input[type="number"]::-webkit-outer-spin-button,
-.inputs>input[type="number"]::-webkit-inner-spin-button {
+.item-box>input[type="number"]::-webkit-outer-spin-button,
+.item-box>input[type="number"]::-webkit-inner-spin-button {
   -webkit-appearance: none;
 }
 
 /* 滑鼠懸停時顯示上下箭頭 */
-.inputs>input[type="number"]:hover,
-.inputs>input[type="number"]:hover {
+.item-box>input[type="number"]:hover,
+.item-box>input[type="number"]:hover {
   padding-right: 0px;
   background: rgb(255 255 255 / 50%);
 }
 
-.inputs>input[type="number"]:hover::-webkit-outer-spin-button,
-.inputs>input[type="number"]:hover::-webkit-inner-spin-button {
+.item-box>input[type="number"]:hover::-webkit-outer-spin-button,
+.item-box>input[type="number"]:hover::-webkit-inner-spin-button {
   -webkit-appearance: auto;
   margin-left: 5px;
 }
@@ -135,7 +157,7 @@ p {
   transition: opacity 0.7s ease-out;
 }
 
-.inputs>label {
+.item-box>label {
   position: relative;
   padding-left: 30px;
   cursor: pointer;
@@ -145,14 +167,14 @@ p {
 }
 
 /* 隱藏原生 checkbox */
-.inputs>label input[type="checkbox"] {
+.item-box>label input[type="checkbox"] {
   position: absolute;
   opacity: 0;
   cursor: pointer;
 }
 
 /* 外框樣式 */
-.inputs>label .checkmark {
+.item-box>label .checkmark {
   position: absolute;
   top: 2px;
   left: 0;
@@ -164,13 +186,13 @@ p {
 }
 
 /* 勾選時的樣式 */
-.inputs>label input:checked~.checkmark {
+.item-box>label input:checked~.checkmark {
   background-color: #4CAF50;
   border-color: #4CAF50;
 }
 
 /* 打勾符號 */
-.inputs>label .checkmark::after {
+.item-box>label .checkmark::after {
   content: "";
   position: absolute;
   display: none;
@@ -184,6 +206,6 @@ p {
 }
 
 /* 顯示勾勾 */
-.inputs>label input:checked~.checkmark::after {
+.item-box>label input:checked~.checkmark::after {
   display: block;
 }
