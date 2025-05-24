@@ -500,7 +500,7 @@
       }
 
       //超過5N+1R
-      if (adjustedFirst.n >= 5) {
+      if (adjustedFirst.sr + adjustedFirst.r + adjustedFirst.n>=6 && adjustedFirst.n >= 5) {
         console.log('超過5N+1R')
         adjustedFirst.r++;
         adjustedFirst.n -= 5;
