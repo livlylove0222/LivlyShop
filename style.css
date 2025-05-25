@@ -74,8 +74,13 @@ button:hover {
   flex-wrap: wrap;
   gap: 12px;
   align-content: flex-start;
-  width: 548px;
+  width: 523px;
   margin: 15px 30px;
+}
+
+hr.separator {
+  width: 100%;
+  margin: 0;
 }
 
 .inputs {
@@ -85,8 +90,8 @@ button:hover {
 .item-img {
   display: flex;
   align-items: center;
-  width: 100px;
-  height: 100px;
+  width: 95px;
+  height: 95px;
   border-radius: 8px;
   overflow: hidden;
 }

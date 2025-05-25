@@ -610,6 +610,9 @@
     let defaultOrder = [];
     let currentItems = [];
 
+    // 分隔線位置設定 - 在這裡修改你想要的分隔線位置
+    const separatorPositions = [10, 26]; // 例如：第10個後、第16個後、第25個後放分隔線
+
     // 產生指定數量的項目
     function generateItems() {
       const count = 35; //項目數量
@@ -638,6 +641,15 @@
                 `;
 
         container.appendChild(itemDiv);
+
+        // 檢查是否需要在此位置加入分隔線
+        if (separatorPositions.includes(i)) {
+          const separator = document.createElement('hr');
+          separator.className = 'separator';
+          separator.dataset.position = i; // 記錄分隔線位置
+          container.appendChild(separator);
+        }
+
         defaultOrder.push(i);
         currentItems.push({
           element: itemDiv,
@@ -652,7 +664,7 @@
     // 依數量排序（由大到小）
     function sortByNumber() {
       const container = document.getElementById('container');
-      const items = Array.from(container.children);
+      const items = Array.from(container.querySelectorAll('.inputs')); // 只選取 .inputs 元素
 
       items.sort((a, b) => {
         const aValue = parseInt(a.querySelector('.userInput').value) || 0;
@@ -660,14 +672,15 @@
         return bValue - aValue; // 由大到小排序
       });
 
-      // 重新排列DOM
+      // 清空容器並重新加入排序後的項目
+      container.innerHTML = '';
       items.forEach(item => container.appendChild(item));
     }
 
     // 恢復預設順序
     function resetOrder() {
       const container = document.getElementById('container');
-      const items = Array.from(container.children);
+      const items = Array.from(container.querySelectorAll('.inputs')); // 只選取 .inputs 元素
 
       items.sort((a, b) => {
         const aIndex = parseInt(a.dataset.originalIndex);
@@ -675,8 +688,22 @@
         return aIndex - bIndex;
       });
 
-      // 重新排列DOM
-      items.forEach(item => container.appendChild(item));
+      // 清空容器
+      container.innerHTML = '';
+
+      // 重新按照原始順序加入項目和分隔線
+      items.forEach(item => {
+        container.appendChild(item);
+        const index = parseInt(item.dataset.originalIndex);
+
+        // 檢查此位置後是否需要分隔線
+        if (separatorPositions.includes(index)) {
+          const separator = document.createElement('hr');
+          separator.className = 'separator';
+          separator.dataset.position = index;
+          container.appendChild(separator);
+        }
+      });
     }
 
     // 儲存到Cookie
