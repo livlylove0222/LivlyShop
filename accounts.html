@@ -2,168 +2,167 @@
 <html lang="zh-TW">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="icon" href="/LivlyShop/favicon.ico">
-    <link rel="stylesheet" href="style_A.css">
-    <title>帳號管理</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/LivlyShop/favicon.ico">
+  <link rel="stylesheet" href="style_A.css">
+  <title>帳號管理</title>
 </head>
 
 <body>
-    <div class="container">
-        <div class="control-panel">
-            <button class="btn-save" id="saveBtn">儲存狀態</button>
-            <button class="btn-clear" id="clearBtn">清除狀態</button>
-        </div>
-
-        <div class="account-list" id="accountList">
-            <!-- 帳號按鈕會自動生成在這裡 -->
-        </div>
-
-        <div class="input-panel">
-            <textarea class="account-input" id="accountInput"
-                placeholder="輸入帳號"></textarea>
-            <button class="btn-add" id="addBtn">新增</button>
-        </div>
+  <div class="container">
+    <div class="control-panel">
+      <button class="btn-save" id="saveBtn">儲存</button>
+      <button class="btn-clear" id="clearBtn">清除</button>
     </div>
+    <div class="block">
+      <div class="account-list" id="accountList">
+        <!-- 帳號按鈕會自動生成在這裡 -->
+      </div>
+      <div class="input-panel">
+        <textarea class="account-input" id="accountInput" placeholder="輸入帳號"></textarea>
+        <button class="btn-add" id="addBtn">新增</button>
+      </div>
+    </div>
+  </div>
 
-    <script>
-        // Cookie 操作函數
-        function setCookie(name, value, days) {
-            const d = new Date();
-            d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
-            const expires = "expires=" + d.toUTCString();
-            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+  <script>
+    // Cookie 操作函數
+    function setCookie(name, value, days) {
+      const d = new Date();
+      d.setTime(d.getTime() + (days * 24 * 60 * 60 * 1000));
+      const expires = "expires=" + d.toUTCString();
+      document.cookie = name + "=" + value + ";" + expires + ";path=/";
+    }
+
+    function getCookie(name) {
+      const nameEQ = name + "=";
+      const ca = document.cookie.split(';');
+      for (let i = 0; i < ca.length; i++) {
+        let c = ca[i];
+        while (c.charAt(0) === ' ') c = c.substring(1, c.length);
+        if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
+      }
+      return null;
+    }
+
+    function deleteCookie(name) {
+      document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    }
+
+    // 資料結構: { accounts: [], clickedStates: {} }
+    let data = {
+      accounts: [],
+      clickedStates: {}
+    };
+
+    // 載入已儲存的資料
+    function loadData() {
+      const saved = getCookie('accountData');
+      if (saved) {
+        try {
+          data = JSON.parse(saved);
+          if (!data.accounts) data.accounts = [];
+          if (!data.clickedStates) data.clickedStates = {};
+        } catch (e) {
+          data = { accounts: [], clickedStates: {} };
+        }
+      }
+    }
+
+    // 儲存資料
+    function saveData() {
+      setCookie('accountData', JSON.stringify(data), 365);
+    }
+
+    // 清除資料
+    function clearData() {
+      data = { accounts: [], clickedStates: {} };
+      deleteCookie('accountData');
+      // 清空按鈕列表
+      document.getElementById('accountList').innerHTML = '';
+    }
+
+    // 生成帳號按鈕
+    function generateButtons() {
+      const accountList = document.getElementById('accountList');
+      accountList.innerHTML = ''; // 清空現有按鈕
+
+      data.accounts.forEach((account, index) => {
+        const btn = document.createElement('button');
+        btn.className = 'account-btn';
+        btn.textContent = account;
+        btn.dataset.index = index;
+
+        // 如果已經點擊過,加上 clicked 類別
+        if (data.clickedStates[index]) {
+          btn.classList.add('clicked');
         }
 
-        function getCookie(name) {
-            const nameEQ = name + "=";
-            const ca = document.cookie.split(';');
-            for (let i = 0; i < ca.length; i++) {
-                let c = ca[i];
-                while (c.charAt(0) === ' ') c = c.substring(1, c.length);
-                if (c.indexOf(nameEQ) === 0) return c.substring(nameEQ.length, c.length);
-            }
-            return null;
-        }
-
-        function deleteCookie(name) {
-            document.cookie = name + "=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-        }
-
-        // 資料結構: { accounts: [], clickedStates: {} }
-        let data = {
-            accounts: [],
-            clickedStates: {}
-        };
-
-        // 載入已儲存的資料
-        function loadData() {
-            const saved = getCookie('accountData');
-            if (saved) {
-                try {
-                    data = JSON.parse(saved);
-                    if (!data.accounts) data.accounts = [];
-                    if (!data.clickedStates) data.clickedStates = {};
-                } catch (e) {
-                    data = { accounts: [], clickedStates: {} };
-                }
-            }
-        }
-
-        // 儲存資料
-        function saveData() {
-            setCookie('accountData', JSON.stringify(data), 365);
-        }
-
-        // 清除資料
-        function clearData() {
-            data = { accounts: [], clickedStates: {} };
-            deleteCookie('accountData');
-            // 清空按鈕列表
-            document.getElementById('accountList').innerHTML = '';
-        }
-
-        // 生成帳號按鈕
-        function generateButtons() {
-            const accountList = document.getElementById('accountList');
-            accountList.innerHTML = ''; // 清空現有按鈕
-
-            data.accounts.forEach((account, index) => {
-                const btn = document.createElement('button');
-                btn.className = 'account-btn';
-                btn.textContent = account;
-                btn.dataset.index = index;
-
-                // 如果已經點擊過,加上 clicked 類別
-                if (data.clickedStates[index]) {
-                    btn.classList.add('clicked');
-                }
-
-                // 點擊事件
-                btn.addEventListener('click', async function () {
-                    try {
-                        await navigator.clipboard.writeText(account);
-                        this.classList.add('clicked');
-                        data.clickedStates[index] = true;
-                    } catch (err) {
-                        alert('複製失敗,請確認瀏覽器權限');
-                    }
-                });
-
-                accountList.appendChild(btn);
-            });
-        }
-
-        // 新增帳號
-        function addAccounts() {
-            const input = document.getElementById('accountInput');
-            const inputValue = input.value.trim();
-
-            if (!inputValue) {
-                alert('請輸入帳號');
-                return;
-            }
-
-            // 用換行分隔並過濾空白
-            const newAccounts = inputValue.split('\n')
-                .map(acc => acc.trim())
-                .filter(acc => acc.length > 0);
-
-            if (newAccounts.length === 0) {
-                alert('沒有有效的帳號');
-                return;
-            }
-
-            // 追加到現有帳號列表
-            data.accounts.push(...newAccounts);
-
-            // 重新生成按鈕
-            generateButtons();
-
-            // 清空輸入框
-            input.value = '';
-
-        }
-
-        // 初始化
-        document.addEventListener('DOMContentLoaded', function () {
-            loadData();
-            generateButtons();
-
-            // 綁定控制按鈕事件
-            document.getElementById('saveBtn').addEventListener('click', saveData);
-            document.getElementById('clearBtn').addEventListener('click', clearData);
-            document.getElementById('addBtn').addEventListener('click', addAccounts);
-
-            // Enter 鍵也可以新增
-            document.getElementById('accountInput').addEventListener('keydown', function (e) {
-                if (e.ctrlKey && e.key === 'Enter') {
-                    addAccounts();
-                }
-            });
+        // 點擊事件
+        btn.addEventListener('click', async function () {
+          try {
+            await navigator.clipboard.writeText(account);
+            this.classList.add('clicked');
+            data.clickedStates[index] = true;
+          } catch (err) {
+            alert('複製失敗,請確認瀏覽器權限');
+          }
         });
-    </script>
+
+        accountList.appendChild(btn);
+      });
+    }
+
+    // 新增帳號
+    function addAccounts() {
+      const input = document.getElementById('accountInput');
+      const inputValue = input.value.trim();
+
+      if (!inputValue) {
+        alert('請輸入帳號');
+        return;
+      }
+
+      // 用換行分隔並過濾空白
+      const newAccounts = inputValue.split('\n')
+        .map(acc => acc.trim())
+        .filter(acc => acc.length > 0);
+
+      if (newAccounts.length === 0) {
+        alert('沒有有效的帳號');
+        return;
+      }
+
+      // 追加到現有帳號列表
+      data.accounts.push(...newAccounts);
+
+      // 重新生成按鈕
+      generateButtons();
+
+      // 清空輸入框
+      input.value = '';
+
+    }
+
+    // 初始化
+    document.addEventListener('DOMContentLoaded', function () {
+      loadData();
+      generateButtons();
+
+      // 綁定控制按鈕事件
+      document.getElementById('saveBtn').addEventListener('click', saveData);
+      document.getElementById('clearBtn').addEventListener('click', clearData);
+      document.getElementById('addBtn').addEventListener('click', addAccounts);
+
+      // Enter 鍵也可以新增
+      document.getElementById('accountInput').addEventListener('keydown', function (e) {
+        if (e.ctrlKey && e.key === 'Enter') {
+          addAccounts();
+        }
+      });
+    });
+  </script>
 </body>
 
 </html>

@@ -13,6 +13,8 @@ body {
 
 .container {
   padding: 0 10px;
+  margin: 0 auto;
+  max-width: 1200px;
 }
 
 .control-panel {
@@ -31,11 +33,17 @@ body {
   cursor: pointer;
 }
 
+.block {
+  display: flex;
+}
+
 .account-list {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 10px;
+  flex-grow: 1;
+  align-content: flex-start;
 }
 
 .account-btn {
@@ -54,15 +62,14 @@ body {
 }
 
 .input-panel {
-  margin: 10% auto 0;
   display: flex;
   flex-direction: column;
-  width: 500px;
+  min-width: 240px;
   gap: 10px;
 }
 
 .account-input {
-  min-height: 250px;
+  min-height: 300px;
   padding: 8px;
   background: #16161b;
   color: #fff;
