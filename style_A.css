@@ -12,13 +12,15 @@ body {
 }
 
 .container {
-  padding: 0 10px;
+  padding: 10px;
   margin: 0 auto;
   max-width: 1200px;
+  display: flex;
+  gap: 15px;
 }
 
 .control-panel {
-  margin: 10px 0;
+  margin-bottom: 10px;
   display: flex;
   gap: 6px;
 }
@@ -31,10 +33,6 @@ body {
   color: #fff;
   font-size: 16px;
   cursor: pointer;
-}
-
-.block {
-  display: flex;
 }
 
 .account-list {
