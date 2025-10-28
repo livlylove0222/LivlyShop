@@ -1,0 +1,813 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/LivlyShop/favicon.ico">
+  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="styleC.css">
+  <title>格萊德里</title>
+</head>
+
+<body>
+  <div class="boxAll">
+    <div class="left">
+      <div class="lt">
+        <h3>格萊德里折扣計算機</h3>
+        <div class="flex">
+          <h4>輸入GP：</h4>
+          <input type="number" id="gpInput" min="0" step="1">
+          <button id="confirmGP">確認</button>
+        </div>
+
+        <div id="srSelectionDiv" style="display: none;">
+          <h4>選擇SR數量：</h4>
+          <div id="srButtons" class="flex"></div>
+        </div>
+
+        <div id="resultDiv" style="display: none;">
+          <div id="resultText"></div>
+        </div>
+      </div>
+      <div class="lb">
+        <!-- 快速GP計算 -->
+        <div class="calculator">
+          <div class="column">
+            <button class="btn-plus" data-type="sr">▲</button>
+            <div class="item">
+              <span class="quantity" id="sr-qty">1</span>SR
+            </div>
+            <button class="btn-minus" data-type="sr">▼</button>
+          </div>
+          <div class="column">
+            <button class="btn-plus" data-type="r">▲</button>
+            <div class="item">
+              <span class="quantity" id="r-qty">1</span>R
+            </div>
+            <button class="btn-minus" data-type="r">▼</button>
+          </div>
+          <div class="column">
+            <button class="btn-plus" data-type="n">▲</button>
+            <div class="item">
+              <span class="quantity" id="n-qty">1</span>N
+            </div>
+            <button class="btn-minus" data-type="n">▼</button>
+          </div>
+          <div class="column">
+            <div class="result">
+              =　<span id="total-items">3</span>項，合計<span id="total-amount">6800</span>
+            </div>
+          </div>
+        </div>
+        <script>
+          // 價格設定
+          const prices = {
+            sr: 5000,
+            r: 1500,
+            n: 300
+          };
+
+          // 數量設定
+          let quantities = {
+            sr: 1,
+            r: 1,
+            n: 1
+          };
+
+          // 更新顯示
+          function updateDisplay() {
+            // 更新各項數量顯示
+            document.getElementById('sr-qty').textContent = quantities.sr;
+            document.getElementById('r-qty').textContent = quantities.r;
+            document.getElementById('n-qty').textContent = quantities.n;
+
+            // 計算總項目數
+            let totalItems = quantities.sr + quantities.r + quantities.n;
+            document.getElementById('total-items').textContent = totalItems;
+
+            // 計算總金額
+            let totalAmount = quantities.sr * prices.sr + quantities.r * prices.r + quantities.n * prices.n;
+            if (totalItems == 2) { totalAmount = totalAmount * 0.95; }
+            else if (totalItems >= 3) { totalAmount = totalAmount * 0.9; }
+            document.getElementById('total-amount').textContent = totalAmount.toLocaleString();;
+          }
+
+          // 增加數量
+          function increaseQuantity(type) {
+            quantities[type]++;
+            updateDisplay();
+          }
+
+          // 減少數量
+          function decreaseQuantity(type) {
+            if (quantities[type] > 0) {
+              quantities[type]--;
+              updateDisplay();
+            }
+          }
+
+          // 綁定事件監聽器
+          document.addEventListener('DOMContentLoaded', function () {
+            // 綁定加號按鈕
+            document.querySelectorAll('.btn-plus').forEach(button => {
+              button.addEventListener('click', function () {
+                const type = this.getAttribute('data-type');
+                increaseQuantity(type);
+              });
+            });
+
+            // 綁定減號按鈕
+            document.querySelectorAll('.btn-minus').forEach(button => {
+              button.addEventListener('click', function () {
+                const type = this.getAttribute('data-type');
+                decreaseQuantity(type);
+              });
+            });
+
+            // 初始化顯示
+            updateDisplay();
+          });
+        </script>
+        <!-- +-計算機 -->
+        <div class="exp"><input type="text" id="expression" placeholder="輸入算式" /> =
+          <div id="plusResult"></div>
+        </div>
+        <script>
+          const input = document.getElementById('expression');
+          const resultDivPlus = document.getElementById('plusResult');
+
+          input.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+              try {
+                const expression = input.value;
+                // 檢查是否只含數字、加減號與空格
+                if (/^[\d+\-.\s]+$/.test(expression)) {
+                  const sanitized = expression.replace(/\s+/g, '');
+                  const result = eval(sanitized); // 注意：eval 適用於受控用途
+                  resultDivPlus.textContent = `結果：${result}`;
+                } else {
+                  resultDivPlus.textContent = '錯誤：只支援數字與 +、- 號';
+                }
+              } catch (e) {
+                resultDivPlus.textContent = '錯誤：無法計算這個表達式';
+              }
+            }
+          });
+        </script>
+      </div>
+    </div>
+    <div class="right">
+      <div id="controls">
+        <div class="btn">
+          <button onclick="sortByNumber()">依數量排序</button>
+          <button onclick="resetOrder()">恢復預設順序</button>
+        </div>
+        <div class="btn">
+          <button onclick="saveToCookie()">儲存資料</button>
+          <button onclick="loadFromCookie()">載入資料</button>
+          <button onclick="clearCookie()">清除資料</button>
+        </div>
+      </div>
+
+      <div id="container" class="buy"></div>
+    </div>
+  </div>
+  <!-- 折扣計算機 -->
+  <script>
+    // 常數設定
+    const SR_PRICE = 5000;
+    const R_PRICE = 1500;
+    const N_PRICE = 300;
+
+    // DOM元素
+    const gpInput = document.getElementById('gpInput');
+    const confirmGPButton = document.getElementById('confirmGP');
+    const srSelectionDiv = document.getElementById('srSelectionDiv');
+    const srButtons = document.getElementById('srButtons');
+    const resultDiv = document.getElementById('resultDiv');
+    const resultText = document.getElementById('resultText');
+
+    // 事件監聽
+    confirmGPButton.addEventListener('click', handleGPConfirmation);
+
+    // 添加Enter鍵功能
+    gpInput.addEventListener('keypress', function (event) {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        handleGPConfirmation();
+      }
+    });
+
+    // 處理GP確認
+    function handleGPConfirmation() {
+      const gpAmount = parseInt(gpInput.value);
+      if (isNaN(gpAmount) || gpAmount < 0) {
+        alert('請輸入有效的GP數量！');
+        return;
+      }
+
+      // 清空先前的按鈕和結果
+      srButtons.innerHTML = '';
+      resultText.innerHTML = '';
+
+      if (gpAmount < 5000) {
+        // GP不足以購買SR，直接計算R/N的最佳組合
+        const result = calculateOptimalPurchase(gpAmount, 0);
+        displayResult(gpAmount, 0, result);
+      } else {
+        // 計算可能的SR數量
+        showSROptions(gpAmount);
+      }
+    }
+
+    // 顯示SR選擇按鈕
+    function showSROptions(gpAmount) {
+      let maxSR = 0;
+      // 估計可購買的最大SR數量（考慮折扣）
+      if (gpAmount >= 13500) {
+        maxSR = Math.floor(gpAmount / (SR_PRICE * 0.9)); // 假設最佳情況下能獲得9折
+      } else if (gpAmount >= 9500) {
+        maxSR = Math.floor(gpAmount / (SR_PRICE * 0.95)); // 95折
+      } else {
+        maxSR = Math.floor(gpAmount / SR_PRICE); // 無折扣
+      }
+
+      // 確保至少顯示1個選項
+      maxSR = Math.max(1, maxSR);
+
+      // 為每個可能的SR數量建立按鈕
+      for (let i = 0; i <= maxSR; i++) {
+        const button = document.createElement('button');
+        button.textContent = i + '個';
+        button.addEventListener('click', () => {
+          selectSRCount(gpAmount, i);
+        });
+        srButtons.appendChild(button);
+      }
+
+      srSelectionDiv.style.display = 'block';
+    }
+
+    // 選擇SR數量後計算最佳購買組合
+    function selectSRCount(gpAmount, srCount) {
+      const result = calculateOptimalPurchase(gpAmount, srCount);
+      displayResult(gpAmount, srCount, result);
+    }
+
+    // 計算最佳購買方案
+    function calculateOptimalPurchase(totalGP, srCount) {
+      // 初始化變數
+      let remainingGP = totalGP;
+      let points = 0;
+      let firstPurchase = { sr: srCount, r: 0, n: 0, cost: 0, points: 0 };
+      let secondPurchase = { sr: 0, r: 0, n: 0, cost: 0, points: 0 };
+      let needSecondPurchase = false;
+
+      // 第一次計算最佳R/N組合
+      firstPurchase = calculateFirstPurchase(remainingGP, srCount, 0);
+      remainingGP -= firstPurchase.cost;
+      points = firstPurchase.points;
+
+      let firstPurchaseAll = firstPurchase.sr + firstPurchase.r + firstPurchase.n
+      console.log('第一次計算的件數:' + firstPurchaseAll);
+      // 判斷是否需要進行分次結帳
+      if (firstPurchaseAll == 1 && firstPurchase.r == 1) {
+        firstPurchase.r--;
+        firstPurchase.n += 5;
+      } else if ((firstPurchaseAll <= 3 && firstPurchase.r > 0) || firstPurchaseAll > 3) {
+        // 考慮分次結帳的情況
+        needSecondPurchase = checkIfNeedSecondPurchase(firstPurchase, points);
+
+        if (needSecondPurchase) {
+          // 調整第一次購買並計算第二次購買
+          const adjustedPurchases = adjustPurchases(firstPurchase, remainingGP, points);
+          firstPurchase = adjustedPurchases.first;
+          secondPurchase = adjustedPurchases.second;
+          remainingGP = totalGP - firstPurchase.cost - secondPurchase.cost;
+          points = secondPurchase.points;
+        }
+      }
+
+      // 驗證是否符合條件
+      const finalPurchases = verifyAndAdjust(totalGP, firstPurchase, secondPurchase, needSecondPurchase);
+
+      return {
+        firstPurchase: finalPurchases.first,
+        secondPurchase: finalPurchases.second,
+        needSecondPurchase: finalPurchases.needSecond,
+        remainingGP: finalPurchases.remainingGP,
+        remainingPoints: finalPurchases.points
+      };
+    }
+
+    // 計算第一次購買的最佳R/N組合
+    function calculateFirstPurchase(gpAmount, srCount, usedPoints) {
+      let remainingGP = gpAmount;
+      let sr = srCount;
+      let r = 0;
+      let n = 0;
+
+      // 計算總件數
+      let totalItems = sr;
+
+      // 先計算可能的折扣
+      let discount = 1.0;
+      let logMessage = '';
+
+      // 檢查能否負擔3件商品獲得9折
+      if (totalItems >= 3 || (totalItems < 3 && gpAmount >= sr * SR_PRICE * 0.9 + (3 - totalItems) * N_PRICE * 0.9)) {
+        discount = 0.9;
+        logMessage = totalItems >= 3 ? '3件9折' : `${totalItems}件湊足3件9折`;
+      }
+      // 檢查能否負擔2件商品獲得95折
+      else if (totalItems == 2 || (totalItems < 2 && gpAmount >= sr * SR_PRICE * 0.95 + (2 - totalItems) * N_PRICE * 0.95)) {
+        discount = 0.95;
+        logMessage = totalItems == 2 ? '2件95折' : `${totalItems}件湊足2件95折`;
+      }
+      // 不能獲得折扣
+      else {
+        logMessage = `${totalItems}件沒折`;
+      }
+
+      // 計算折扣後的SR成本
+      remainingGP -= Math.floor(sr * SR_PRICE * discount);
+      console.log(logMessage);
+
+      // 決定是否需要湊足3件獲得最大折扣
+      if (totalItems < 3 && remainingGP >= 0) {
+        // 嚐試添加R來湊足3件
+        while (totalItems < 3 && remainingGP >= R_PRICE * discount) {
+          r++;
+          remainingGP -= R_PRICE * discount;
+          totalItems++;
+        }
+
+        // 如果仍不足3件，嚐試添加N
+        while (totalItems < 3 && remainingGP >= N_PRICE * discount) {
+          n++;
+          remainingGP -= N_PRICE * discount;
+          totalItems++;
+        }
+      }
+
+      // 如果還有剩餘GP且已經湊足3件（或已不可能湊足），繼續優化
+      if (remainingGP > 0) {
+        // 優先購買R（因為通常比N划算）
+        let additionalR = Math.floor(remainingGP / (R_PRICE * discount));
+        r += additionalR;
+        remainingGP -= additionalR * R_PRICE * discount;
+
+        // 有餘力再買N
+        let additionalN = Math.floor(remainingGP / (N_PRICE * discount));
+        n += additionalN;
+        remainingGP -= additionalN * N_PRICE * discount;
+      }
+
+      const originalCost = sr * SR_PRICE + r * R_PRICE + n * N_PRICE;
+      const finalCost = Math.floor(originalCost * discount - usedPoints);
+      const earnedPoints = Math.floor(finalCost * 0.01);
+
+      return {
+        sr: sr,
+        r: r,
+        n: n,
+        originalCost: originalCost,
+        cost: finalCost,
+        points: earnedPoints,
+        usedPoints: usedPoints
+      };
+    }
+
+    // 檢查是否需要分次結帳
+    function checkIfNeedSecondPurchase(firstPurchase, points) {
+      const totalItems = firstPurchase.sr + firstPurchase.r + firstPurchase.n;
+
+      // 第一次購買全為SR，不需要第二次
+      if (totalItems == firstPurchase.sr) {
+        console.log('第一次購買全為SR，不需要第二次');
+        return false;
+      }
+
+      // 第一次購買3件或以下，但有R
+      if (totalItems <= 3 && firstPurchase.r > 0) {
+        console.log('第一次購買3件或以下，但有R');
+        return true;
+      }
+
+      // 扣掉3件後N數量>=3
+      if (totalItems > 5 && firstPurchase.n >= 3) {
+        console.log('扣掉3件後N數量>=3');
+        return true;
+      }
+
+      // 含R
+      if (firstPurchase.r > 0) {
+        console.log('含R');
+        return true;
+      }
+
+      // 第一次總件數>=5且點數>66
+      if (totalItems >= 5 && points > 36) {
+        console.log('第一次總件數>=5且點數>36');
+        return true;
+      }
+
+      // 點數>33
+      if (points > 33) {
+        console.log('點數>33');
+        return true;
+      }
+
+      return false;
+    }
+
+    // 調整購買方案
+    function adjustPurchases(firstPurchase, remainingGP, points) {
+      let adjustedFirst = { ...firstPurchase };
+      let second = { sr: 0, r: 0, n: 0, cost: 0, points: 0, usedPoints: 0 };
+      const totalItems = firstPurchase.sr + firstPurchase.r + firstPurchase.n;
+
+      // 第一次購買3件或以下，但有R
+      if (totalItems == 1 && firstPurchase.r > 0) {
+        adjustedFirst.r -= 1;
+        adjustedFirst.n += 3;
+        second.n = 2;
+      } else if (totalItems >= 2 && firstPurchase.r > 0) {
+        adjustedFirst.r -= 1;
+        adjustedFirst.n += 2;
+        second.n = 3;
+      }
+      // 扣掉3件後N數量>=3
+      else if (totalItems > 5 && firstPurchase.n >= 3) {
+        adjustedFirst.n -= 3;
+        second.n = 3;
+      }
+      // 含R
+      else if (firstPurchase.r > 0) {
+        adjustedFirst.r -= 1;
+        adjustedFirst.n += 2;
+        second.n = 3;
+      }
+      // 第一次總件數>=5且點數>36
+      else if (totalItems >= 5 && points > 36) {
+        adjustedFirst.n -= 2;
+        second.n = 2;
+      }
+      // 點數>33
+      else if (points > 33) {
+        adjustedFirst.n -= 1;
+        second.n = 1;
+      }
+
+      // 重新計算第一次購買的花費和點數
+      const firstTotalItems = adjustedFirst.sr + adjustedFirst.r + adjustedFirst.n;
+      let firstDiscount = 1.0;
+      if (firstTotalItems >= 3) firstDiscount = 0.9;
+      else if (firstTotalItems == 2) firstDiscount = 0.95;
+
+      const firstOriginalCost = adjustedFirst.sr * SR_PRICE + adjustedFirst.r * R_PRICE + adjustedFirst.n * N_PRICE;
+      adjustedFirst.originalCost = firstOriginalCost;
+      adjustedFirst.cost = Math.floor(firstOriginalCost * firstDiscount - adjustedFirst.usedPoints);
+      adjustedFirst.points = Math.floor(adjustedFirst.cost * 0.01);
+
+      // 計算第二次購買的花費和點數
+      const secondTotalItems = second.sr + second.r + second.n;
+      let secondDiscount = 1.0;
+      if (secondTotalItems >= 3) secondDiscount = 0.9;
+      else if (secondTotalItems == 2) secondDiscount = 0.95;
+
+      const secondOriginalCost = second.sr * SR_PRICE + second.r * R_PRICE + second.n * N_PRICE;
+      second.originalCost = secondOriginalCost;
+      second.usedPoints = adjustedFirst.points;
+      second.cost = Math.floor(secondOriginalCost * secondDiscount - second.usedPoints);
+      second.points = Math.floor(second.cost * 0.01);
+
+      return { first: adjustedFirst, second: second };
+    }
+
+    // 驗證並調整購買方案
+    function verifyAndAdjust(totalGP, firstPurchase, secondPurchase, needSecondPurchase) {
+      let adjustedFirst = { ...firstPurchase };
+      let adjustedSecond = { ...secondPurchase };
+      let needSecond = needSecondPurchase;
+
+      // 計算剩餘GP和點數
+      let remainingGP = totalGP - adjustedFirst.cost;
+      let remainingPoints = adjustedFirst.points;
+
+      if (needSecond) {
+        remainingGP -= adjustedSecond.cost;
+        remainingPoints = adjustedSecond.points;
+      }
+
+      //超過5N+1R
+      if (adjustedFirst.sr + adjustedFirst.r + adjustedFirst.n >= 6 && adjustedFirst.n >= 5) {
+        console.log('超過5N+1R')
+        adjustedFirst.r++;
+        adjustedFirst.n -= 5;
+      }
+
+      // 檢查剩餘GP+點數是否超過299
+      if (remainingGP + remainingPoints > 299) {
+        // 需要回溯調整，增加第一次購買
+        if (remainingGP >= N_PRICE * 0.9) {
+          // 可以再買N
+          const additionalN = Math.min(
+            Math.floor(remainingGP / (N_PRICE * 0.9)),
+            Math.ceil((remainingGP + remainingPoints - 299) / (N_PRICE * 0.9))
+          );
+
+          adjustedFirst.n += additionalN;
+
+          // 重新計算第一次購買
+          const firstTotalItems = adjustedFirst.sr + adjustedFirst.r + adjustedFirst.n;
+          //超過5N+1R
+          if (adjustedFirst.n >= 5) {
+            adjustedFirst.r++;
+            adjustedFirst.n -= 5;
+          }
+          let firstDiscount = 1.0;
+          if (firstTotalItems >= 3) firstDiscount = 0.9;
+          else if (firstTotalItems == 2) firstDiscount = 0.95;
+
+          const firstOriginalCost = adjustedFirst.sr * SR_PRICE + adjustedFirst.r * R_PRICE + adjustedFirst.n * N_PRICE;
+          adjustedFirst.originalCost = firstOriginalCost;
+          adjustedFirst.cost = Math.floor(firstOriginalCost * firstDiscount - adjustedFirst.usedPoints);
+          adjustedFirst.points = Math.floor(adjustedFirst.cost * 0.01);
+
+          // 如果需要第二次購買，重新計算
+          if (needSecond) {
+            adjustedSecond.usedPoints = adjustedFirst.points;
+            adjustedSecond.cost = Math.floor(adjustedSecond.originalCost * (adjustedSecond.sr + adjustedSecond.r + adjustedSecond.n >= 3 ? 0.9 : (adjustedSecond.sr + adjustedSecond.r + adjustedSecond.n == 2 ? 0.95 : 1)) - adjustedSecond.usedPoints);
+            adjustedSecond.points = Math.floor(adjustedSecond.cost * 0.01);
+          }
+
+          // 重新計算剩餘GP和點數
+          remainingGP = totalGP - adjustedFirst.cost;
+          remainingPoints = adjustedFirst.points;
+
+          if (needSecond) {
+            remainingGP -= adjustedSecond.cost;
+            remainingPoints = adjustedSecond.points;
+          }
+        }
+      }
+
+      // 確保剩餘GP>10時，剩餘點數不可>剩餘GP
+      if (remainingGP > 10 && remainingPoints > remainingGP) {
+        // 需要回溯調整
+        // 這裡可以再增加購買來減少剩餘點數
+        // 或者考慮其他調整策略
+      }
+
+      return {
+        first: adjustedFirst,
+        second: adjustedSecond,
+        needSecond: needSecond,
+        remainingGP: remainingGP,
+        points: remainingPoints
+      };
+    }
+
+    // 顯示計算結果
+    function displayResult(totalGP, srCount, result) {
+      let outputText = `<p>${totalGP}GP，${srCount}SR</p><h4>購買方式：</h4><table><tr><th>順序</th><th>組合</th><th>GP</th><th>點數</th></tr>`;
+
+      // 顯示第一次購買，簡化顯示
+      outputText += `<tr><td>1</td><td>${formatPurchase(result.firstPurchase.sr, result.firstPurchase.r, result.firstPurchase.n)}</td><td>${result.firstPurchase.cost}</td><td>${result.firstPurchase.points}</td></tr>`;
+
+      // 如果需要第二次購買，顯示第二次購買
+      if (result.needSecondPurchase) {
+        outputText += `<tr><td>2</td><td>${formatPurchase(result.secondPurchase.sr, result.secondPurchase.r, result.secondPurchase.n)}</td><td>${result.secondPurchase.cost}</td><td>${result.secondPurchase.points}</td></tr>`;
+      }
+
+      // 顯示總結
+      const totalCost = result.firstPurchase.cost + (result.needSecondPurchase ? result.secondPurchase.cost : 0);
+      outputText += `</table><p><br>共使用 GP：${totalCost}<br>`;
+      outputText += `剩餘 GP：${result.remainingGP}<br>`;
+      outputText += `剩餘商店點數：${result.remainingPoints}</p>`;
+
+      resultText.innerHTML = outputText;
+      resultDiv.style.display = 'block';
+    }
+
+    // 格式化購買顯示（只有1的不顯示數字，只有0的不顯示項目）
+    function formatPurchase(sr, r, n) {
+      let parts = [];
+
+      if (sr > 0) parts.push(sr === 1 ? "SR" : sr + "SR");
+      if (r > 0) parts.push(r === 1 ? "R" : r + "R");
+      if (n > 0) parts.push(n === 1 ? "N" : n + "N");
+
+      return parts.join("+");
+    }
+  </script>
+  <!-- 道具確認 -->
+
+  <script>
+    let defaultOrder = [];
+    let currentItems = [];
+
+    // 分隔線位置設定 - 在這裡修改你想要的分隔線位置
+    const separatorPositions = [2, 10]; // 例如：第10個後、第16個後、第25個後放分隔線
+
+    // 產生指定數量的項目
+    function generateItems() {
+      const count = 30; //項目數量
+      const container = document.getElementById('container');
+      container.innerHTML = '';
+
+      defaultOrder = [];
+      currentItems = [];
+
+      for (let i = 1; i <= count; i++) {
+        const itemDiv = document.createElement('div');
+        itemDiv.className = 'inputs';
+        itemDiv.dataset.originalIndex = i;
+
+        itemDiv.innerHTML = `
+                    <div class="item-img">
+                      <img src="images/gs2510/img-${i}.jpg" alt="項目 ${i}">
+                    </div>
+                    <div class="item-box">
+                      <label>
+                        <input class="userCheck" type="checkbox" data-index="${i}">
+                        <span class="checkmark"></span>
+                      </label>
+                      <input type="number" class="userInput" data-index="${i}" min="0">
+                    </div>
+                `;
+
+        container.appendChild(itemDiv);
+
+        // 檢查是否需要在此位置加入分隔線
+        if (separatorPositions.includes(i)) {
+          const separator = document.createElement('hr');
+          separator.className = 'separator';
+          separator.dataset.position = i; // 記錄分隔線位置
+          container.appendChild(separator);
+        }
+
+        defaultOrder.push(i);
+        currentItems.push({
+          element: itemDiv,
+          originalIndex: i
+        });
+      }
+
+      // 載入已儲存的資料
+      loadFromCookie();
+    }
+
+    // 依數量排序（由大到小）
+    function sortByNumber() {
+      const container = document.getElementById('container');
+      const items = Array.from(container.querySelectorAll('.inputs')); // 只選取 .inputs 元素
+
+      items.sort((a, b) => {
+        const aValue = parseInt(a.querySelector('.userInput').value) || 0;
+        const bValue = parseInt(b.querySelector('.userInput').value) || 0;
+        return bValue - aValue; // 由大到小排序
+      });
+
+      // 清空容器並重新加入排序後的項目
+      container.innerHTML = '';
+      items.forEach(item => container.appendChild(item));
+    }
+
+    // 恢復預設順序
+    function resetOrder() {
+      const container = document.getElementById('container');
+      const items = Array.from(container.querySelectorAll('.inputs')); // 只選取 .inputs 元素
+
+      items.sort((a, b) => {
+        const aIndex = parseInt(a.dataset.originalIndex);
+        const bIndex = parseInt(b.dataset.originalIndex);
+        return aIndex - bIndex;
+      });
+
+      // 清空容器
+      container.innerHTML = '';
+
+      // 重新按照原始順序加入項目和分隔線
+      items.forEach(item => {
+        container.appendChild(item);
+        const index = parseInt(item.dataset.originalIndex);
+
+        // 檢查此位置後是否需要分隔線
+        if (separatorPositions.includes(index)) {
+          const separator = document.createElement('hr');
+          separator.className = 'separator';
+          separator.dataset.position = index;
+          container.appendChild(separator);
+        }
+      });
+    }
+
+    // 儲存到Cookie
+    function saveToCookie() {
+      const data = {
+        checkboxes: {},
+        inputs: {}
+      };
+
+      // 收集checkbox狀態
+      document.querySelectorAll('.userCheck').forEach(checkbox => {
+        const index = checkbox.dataset.index;
+        data.checkboxes[index] = checkbox.checked;
+      });
+
+      // 收集input值
+      document.querySelectorAll('.userInput').forEach(input => {
+        const index = input.dataset.index;
+        data.inputs[index] = input.value;
+      });
+
+      // 設定Cookie (14天期限)
+      const expires = new Date();
+      expires.setTime(expires.getTime() + (14 * 24 * 60 * 60 * 1000)); // 14天
+      document.cookie = `shoppingData=${JSON.stringify(data)}; expires=${expires.toUTCString()}; path=/`;
+
+      showNotification("已儲存");
+    }
+
+    // 從Cookie載入
+    function loadFromCookie() {
+      const cookies = document.cookie.split(';');
+      let shoppingData = null;
+
+      for (let cookie of cookies) {
+        const [name, value] = cookie.trim().split('=');
+        if (name === 'shoppingData') {
+          try {
+            shoppingData = JSON.parse(decodeURIComponent(value));
+          } catch (e) {
+            console.error('Cookie解析錯誤:', e);
+            return;
+          }
+          break;
+        }
+      }
+
+      if (!shoppingData) return;
+
+      // 恢復checkbox狀態
+      Object.keys(shoppingData.checkboxes).forEach(index => {
+        const checkbox = document.querySelector(`.userCheck[data-index="${index}"]`);
+        if (checkbox) {
+          checkbox.checked = shoppingData.checkboxes[index];
+        }
+      });
+
+      // 恢復input值
+      Object.keys(shoppingData.inputs).forEach(index => {
+        const input = document.querySelector(`.userInput[data-index="${index}"]`);
+        if (input) {
+          input.value = shoppingData.inputs[index];
+        }
+      });
+      showNotification("已載入");
+    }
+
+    // 清除Cookie
+    function clearCookie() {
+      document.cookie = 'shoppingData=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/';
+
+      // 清除頁面上的所有勾選和輸入
+      document.querySelectorAll('.userCheck').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+
+      document.querySelectorAll('.userInput').forEach(input => {
+        input.value = '';
+      });
+
+      showNotification("已清除");
+    }
+
+    // 頁面載入時自動產生預設項目
+    window.onload = function () {
+      generateItems();
+    };
+
+    function showNotification(message) {
+      // 創建通知元素
+      let notification = document.createElement("div");
+      notification.className = "notification";
+      notification.textContent = message;
+
+      // 添加到 body
+      document.body.appendChild(notification);
+
+      // 動畫結束後移除元素
+      setTimeout(() => {
+        notification.remove();
+      }, 700);
+    }
+  </script>
+
+</body>
+
+</html>
