@@ -71,17 +71,19 @@ button:hover {
 
 .all-shops {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: space-between;
 }
 
 .shop-title {
-  margin: 20px 30px 5px;
-  border-top: 2px solid #bbb;
-  border-bottom: 2px solid #bbb;
-  width: 100%;
+  margin: 20px auto 5px;
+  width: 93%;
   text-align: center;
   padding: 5px;
+  border-radius: 10px;
+  background: #ffffff24;
 }
 
 .buy {
@@ -107,7 +109,7 @@ hr.separator {
   align-items: center;
   width: 95px;
   height: 95px;
-  border-radius: 8px;
+  border-radius: 10px;
   overflow: hidden;
 }
 
