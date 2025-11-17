@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/LivlyShop/favicon.ico">
+  <link rel="stylesheet" href="style.css">
+  <title>創作者週</title>
+</head>
+
+<body>
+  <div class="boxAll">
+    <div class="left">
+      <div class="lb" style="padding-top: 100px;">
+        <!-- 快速GP計算 -->
+        <div class="calculator">
+          <div class="column">
+            <button class="btn-plus" data-type="sr">▲</button>
+            <div class="item">
+              <span class="quantity" id="sr-qty">1</span>SR
+            </div>
+            <button class="btn-minus" data-type="sr">▼</button>
+          </div>
+          <div class="column">
+            <button class="btn-plus" data-type="r">▲</button>
+            <div class="item">
+              <span class="quantity" id="r-qty">1</span>R
+            </div>
+            <button class="btn-minus" data-type="r">▼</button>
+          </div>
+          <div class="column">
+            <button class="btn-plus" data-type="n">▲</button>
+            <div class="item">
+              <span class="quantity" id="n-qty">1</span>N
+            </div>
+            <button class="btn-minus" data-type="n">▼</button>
+          </div>
+          <div class="column">
+            <div class="result">
+              =　<span id="total-items">3</span>項，合計<span id="total-amount">6800</span>
+            </div>
+          </div>
+        </div>
+        
+        <script>
+          // 價格設定
+          const prices = {
+            sr: 5000,
+            r: 1500,
+            n: 300
+          };
+
+          // 數量設定
+          let quantities = {
+            sr: 1,
+            r: 1,
+            n: 1
+          };
+
+          // 更新顯示
+          function updateDisplay() {
+            // 更新各項數量顯示
+            document.getElementById('sr-qty').textContent = quantities.sr;
+            document.getElementById('r-qty').textContent = quantities.r;
+            document.getElementById('n-qty').textContent = quantities.n;
+
+            // 計算總項目數
+            let totalItems = quantities.sr + quantities.r + quantities.n;
+            document.getElementById('total-items').textContent = totalItems;
+
+            // 計算總金額
+            let totalAmount = quantities.sr * prices.sr + quantities.r * prices.r + quantities.n * prices.n;
+            if (totalItems == 2) { totalAmount = totalAmount * 0.95; }
+            else if (totalItems >= 3) { totalAmount = totalAmount * 0.9; }
+            document.getElementById('total-amount').textContent = totalAmount.toLocaleString();;
+          }
+
+          // 增加數量
+          function increaseQuantity(type) {
+            quantities[type]++;
+            updateDisplay();
+          }
+
+          // 減少數量
+          function decreaseQuantity(type) {
+            if (quantities[type] > 0) {
+              quantities[type]--;
+              updateDisplay();
+            }
+          }
+
+          // 綁定事件監聽器
+          document.addEventListener('DOMContentLoaded', function () {
+            // 綁定加號按鈕
+            document.querySelectorAll('.btn-plus').forEach(button => {
+              button.addEventListener('click', function () {
+                const type = this.getAttribute('data-type');
+                increaseQuantity(type);
+              });
+            });
+
+            // 綁定減號按鈕
+            document.querySelectorAll('.btn-minus').forEach(button => {
+              button.addEventListener('click', function () {
+                const type = this.getAttribute('data-type');
+                decreaseQuantity(type);
+              });
+            });
+
+            // 初始化顯示
+            updateDisplay();
+          });
+        </script>
+        <!-- +-計算機 -->
+        <div class="exp"><input type="text" id="expression" placeholder="輸入算式" /> =
+          <div id="plusResult"></div>
+        </div>
+        <script>
+          const input = document.getElementById('expression');
+          const resultDivPlus = document.getElementById('plusResult');
+
+          input.addEventListener('keydown', function (event) {
+            if (event.key === 'Enter') {
+              try {
+                const expression = input.value;
+                // 檢查是否只含數字、加減號與空格
+                if (/^[\d+\-.\s]+$/.test(expression)) {
+                  const sanitized = expression.replace(/\s+/g, '');
+                  const result = eval(sanitized); // 注意：eval 適用於受控用途
+                  resultDivPlus.textContent = `結果：${result}`;
+                } else {
+                  resultDivPlus.textContent = '錯誤：只支援數字與 +、- 號';
+                }
+              } catch (e) {
+                resultDivPlus.textContent = '錯誤：無法計算這個表達式';
+              }
+            }
+          });
+        </script>
+      </div>
+    </div>
+    <div class="right">
+      <!-- 控制按鈕區 -->
+      <div id="controls">
+        <div class="btn">
+          <button onclick="saveAllShops()">儲存資料</button>
+          <button onclick="loadAllShops()">載入資料</button>
+          <button onclick="clearAllShops()">清除資料</button>
+        </div>
+      </div>
+
+      <!-- 所有店家容器 -->
+      <div id="all-shops" class="all-shops"></div>
+    </div>
+  </div>
+
+  <script>
+    // 店家設定
+    const shops = [
+      {
+        id: 'tba',
+        name: '梱包 tba',
+        path: 'images/livCreat/tba/',
+        itemCount: 16,
+        separators: [2, 14]
+      },
+      {
+        id: 'moco',
+        name: 'moco',
+        path: 'images/livCreat/moco/',
+        itemCount: 18,
+        separators: [6, 16]
+      },
+      {
+        id: 'INARI',
+        name: 'INARI',
+        path: 'images/livCreat/INARI/',
+        itemCount: 18,
+        separators: [5, 14]
+      },
+      {
+        id: 'Citron',
+        name: 'シトロン',
+        path: 'images/livCreat/Citron/',
+        itemCount: 18,
+        separators: [16]
+      },
+      {
+        id: 'Medici',
+        name: 'メディチ',
+        path: 'images/livCreat/Medici/',
+        itemCount: 8,
+        separators: [5, 6]
+      }
+    ];
+
+    // 產生所有店家的項目
+    function generateAllShops() {
+      const container = document.getElementById('all-shops');
+      container.innerHTML = '';
+
+      shops.forEach(shop => {
+        // 建立店家標題
+        const title = document.createElement('h2');
+        title.textContent = shop.name;
+        title.className = 'shop-title';
+        container.appendChild(title);
+
+        // 建立店家區塊
+        const shopSection = document.createElement('div');
+        shopSection.className = 'buy';
+        shopSection.dataset.shopId = shop.id;
+
+        // 產生道具項目
+        for (let i = 1; i <= shop.itemCount; i++) {
+          const itemDiv = document.createElement('div');
+          itemDiv.className = 'inputs';
+          itemDiv.dataset.originalIndex = i;
+          itemDiv.dataset.shopId = shop.id;
+
+          itemDiv.innerHTML = `
+            <div class="item-img">
+              <img src="${shop.path}img-${i}.jpg" alt="項目 ${i}">
+            </div>
+            <div class="item-box">
+              <label>
+                <input class="userCheck" type="checkbox" data-index="${i}" data-shop="${shop.id}">
+                <span class="checkmark"></span>
+              </label>
+              <input type="number" class="userInput" data-index="${i}" data-shop="${shop.id}" min="0">
+            </div>
+          `;
+
+          shopSection.appendChild(itemDiv);
+
+          // 檢查是否需要在此位置加入分隔線
+          if (shop.separators.includes(i)) {
+            const separator = document.createElement('hr');
+            separator.className = 'separator';
+            separator.dataset.position = i;
+            shopSection.appendChild(separator);
+          }
+        }
+
+        container.appendChild(shopSection);
+      });
+    }
+
+    // 儲存所有店家資料到Cookie
+    function saveAllShops() {
+      shops.forEach(shop => {
+        const data = {
+          checkboxes: {},
+          inputs: {}
+        };
+
+        // 收集該店家的checkbox狀態
+        document.querySelectorAll(`.userCheck[data-shop="${shop.id}"]`).forEach(checkbox => {
+          const index = checkbox.dataset.index;
+          data.checkboxes[index] = checkbox.checked;
+        });
+
+        // 收集該店家的input值
+        document.querySelectorAll(`.userInput[data-shop="${shop.id}"]`).forEach(input => {
+          const index = input.dataset.index;
+          data.inputs[index] = input.value;
+        });
+
+        // 設定Cookie (14天期限)
+        const expires = new Date();
+        expires.setTime(expires.getTime() + (14 * 24 * 60 * 60 * 1000));
+        document.cookie = `shopData_${shop.id}=${JSON.stringify(data)}; expires=${expires.toUTCString()}; path=/`;
+      });
+
+      showNotification("已儲存");
+    }
+
+    // 載入所有店家資料
+    function loadAllShops() {
+      let loadedCount = 0;
+
+      shops.forEach(shop => {
+        const cookies = document.cookie.split(';');
+        let shopData = null;
+
+        for (let cookie of cookies) {
+          const [name, value] = cookie.trim().split('=');
+          if (name === `shopData_${shop.id}`) {
+            try {
+              shopData = JSON.parse(decodeURIComponent(value));
+              loadedCount++;
+            } catch (e) {
+              console.error('Cookie解析錯誤:', e);
+              continue;
+            }
+            break;
+          }
+        }
+
+        if (shopData) {
+          // 恢復checkbox狀態
+          Object.keys(shopData.checkboxes).forEach(index => {
+            const checkbox = document.querySelector(`.userCheck[data-shop="${shop.id}"][data-index="${index}"]`);
+            if (checkbox) {
+              checkbox.checked = shopData.checkboxes[index];
+            }
+          });
+
+          // 恢復input值
+          Object.keys(shopData.inputs).forEach(index => {
+            const input = document.querySelector(`.userInput[data-shop="${shop.id}"][data-index="${index}"]`);
+            if (input) {
+              input.value = shopData.inputs[index];
+            }
+          });
+        }
+      });
+
+      if (loadedCount > 0) {
+        showNotification("已載入");
+      } else {
+        showNotification("無儲存資料");
+      }
+    }
+
+    // 清除所有店家資料
+    function clearAllShops() {
+      shops.forEach(shop => {
+        document.cookie = `shopData_${shop.id}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/`;
+
+        // 清除該店家頁面上的所有勾選和輸入
+        document.querySelectorAll(`.userCheck[data-shop="${shop.id}"]`).forEach(checkbox => {
+          checkbox.checked = false;
+        });
+
+        document.querySelectorAll(`.userInput[data-shop="${shop.id}"]`).forEach(input => {
+          input.value = '';
+        });
+      });
+
+      showNotification("已清除");
+    }
+
+    // 通知訊息
+    function showNotification(message) {
+      let notification = document.createElement("div");
+      notification.className = "notification";
+      notification.textContent = message;
+      document.body.appendChild(notification);
+
+      setTimeout(() => {
+        notification.remove();
+      }, 700);
+    }
+
+    // 頁面載入時初始化
+    window.onload = function () {
+      // 產生所有店家的項目
+      generateAllShops();
+
+      // 自動載入已儲存的資料
+      loadAllShops();
+    };
+  </script>
+
+</body>
+
+</html>

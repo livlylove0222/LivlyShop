@@ -69,6 +69,21 @@ button:hover {
   gap: 45px;
 }
 
+.all-shops {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.shop-title {
+  margin: 20px 30px 5px;
+  border-top: 2px solid #bbb;
+  border-bottom: 2px solid #bbb;
+  width: 100%;
+  text-align: center;
+  padding: 5px;
+}
+
 .buy {
   display: flex;
   flex-wrap: wrap;
@@ -228,4 +243,117 @@ p {
 /* 顯示勾勾 */
 .item-box>label input:checked~.checkmark::after {
   display: block;
+}
+
+.boxAll {
+  display: flex;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.left {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.left .lt {
+  flex-grow: 1;
+}
+
+.left .lb {
+  min-height: 45%;
+}
+
+.exp {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.left h4 {
+  margin: 3px 0;
+}
+
+.left .flex {
+  padding: 6px 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.left input {
+  font-family: inherit;
+  outline: 0;
+  border-radius: 4px;
+  height: 30px;
+  padding: 0 6px;
+  border: 1px solid #ddd;
+  background: #1b1c23;
+  color: #e1e1e1;
+}
+
+#srSelection,
+#result,
+#srSelectionDiv,
+#resultDiv {
+  margin-top: 10px;
+}
+
+#resultText,
+#resultContent {
+  padding: 10px 15px;
+  border-radius: 10px;
+  background: #505054;
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  font-size: 16px;
+  margin: 0;
+}
+
+#resultText p,
+#resultContent p {
+  margin: 0;
+  align-self: flex-start;
+  font-size: 16px;
+  font-weight: normal;
+}
+
+#resultText table {
+  border-collapse: collapse;
+}
+
+#resultText th,
+#resultText td {
+  border: 1px solid #ddd;
+  padding: 5px 12px;
+  text-align: center;
+}
+
+.calculator {
+  display: flex;
+  gap: 17px;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.column {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.item {
+  display: flex;
+  height: 30px;
+  align-items: center;
+  gap: 2px;
+  font-weight: bold;
+}
+
+.result {
+  display: flex;
+  gap: 4px;
+  font-weight: bold;
 }
