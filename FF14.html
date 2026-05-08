@@ -4,62 +4,167 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="icon" href="/LivlyShop/favicon.ico">
-<title>FF14 僱員市場分析 · 巴哈姆特</title>
+<title>FF14 僱員市場分析</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
   :root {
-    --bg: #ffffff; --bg2: #f5f5f4; --bg3: #eeece9;
-    --text: #1c1c1a; --text2: #6b6b67; --text3: #a09f9b;
-    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
-    --radius: 8px; --radius-lg: 12px;
-    --danger-bg: #fcebeb; --danger-text: #a32d2d;
+    --bg: #ffffff;
+    --bg2: #f5f5f4;
+    --bg3: #eeece9;
+    --text: #1c1c1a;
+    --text2: #6b6b67;
+    --text3: #a09f9b;
+    --border: rgba(0,0,0,0.12);
+    --border2: rgba(0,0,0,0.22);
+    --radius: 8px;
+    --radius-lg: 12px;
+    --danger-bg: #fcebeb;
+    --danger-text: #a32d2d;
+    --accent: #4a90e2;
   }
+
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1e1e1c; --bg2: #272724; --bg3: #303030;
-      --text: #e8e6e1; --text2: #9a9890; --text3: #5e5d58;
-      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
-      --danger-bg: #3a1414; --danger-text: #f09595;
+      --bg: #1e1e1c;
+      --bg2: #272724;
+      --bg3: #303030;
+      --text: #e8e6e1;
+      --text2: #9a9890;
+      --text3: #5e5d58;
+      --border: rgba(255,255,255,0.1);
+      --border2: rgba(255,255,255,0.2);
+      --danger-bg: #3a1414;
+      --danger-text: #f09595;
     }
   }
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; padding: 24px 16px; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+    background: var(--bg3);
+    color: var(--text);
+    min-height: 100vh;
+    padding: 24px 16px;
+  }
+
   .app { max-width: 780px; margin: 0 auto; }
-  .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 12px; }
+
+  .header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+  }
+
   .title { font-size: 20px; font-weight: 600; }
   .subtitle { font-size: 13px; color: var(--text2); margin-top: 3px; }
-  .btn { background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 14px; font-size: 13px; cursor: pointer; color: var(--text); display: inline-flex; align-items: center; gap: 6px; }
+
+  .loading-overlay {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: var(--accent);
+    color: white;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    display: none;
+    z-index: 1000;
+  }
+
+  .btn {
+    background: var(--bg);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    padding: 7px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    color: var(--text);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+  }
+
   .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+
   .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-  .tab { padding: 9px 18px; font-size: 14px; cursor: pointer; color: var(--text2); border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
-  .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+  .tab {
+    padding: 12px 18px;
+    font-size: 14px;
+    cursor: pointer;
+    color: var(--text2);
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    transition: all 0.12s;
+  }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 600; }
+
   .panel { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
-  .search-row { display: flex; gap: 8px; margin-bottom: 14px; position: relative; }
-  .search-row input { flex: 1; padding: 9px 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); outline: none; }
-  .dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); z-index: 100; max-height: 230px; overflow-y: auto; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+
+  .search-row { position: relative; margin-bottom: 14px; }
+  .search-row input {
+    width: 100%;
+    padding: 10px 14px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    background: var(--bg2);
+    color: var(--text);
+    outline: none;
+  }
+
+  .dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: var(--bg);
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius);
+    z-index: 100;
+    max-height: 400px;
+    overflow-y: auto;
+    display: none;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+  }
   .dropdown.show { display: block; }
-  .dd-item { padding: 9px 13px; font-size: 14px; cursor: pointer; border-bottom: 0.5px solid var(--border); }
+  .dd-item {
+    padding: 10px 14px;
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 0.5px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+  }
   .dd-item:hover { background: var(--bg2); }
-  .dd-sub { font-size: 12px; color: var(--text2); }
-  
-  /* 排序列樣式 */
-  .sort-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; font-size: 13px; color: var(--text2); }
-  .sort-btn { padding: 4px 12px; font-size: 12px; border-radius: 20px; border: 0.5px solid var(--border); background: transparent; cursor: pointer; color: var(--text2); transition: all 0.12s; }
+  .dd-tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--bg3); color: var(--text2); }
+  .dd-en { color: #a37c2d; font-weight: 500; }
+
+  .sort-bar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; font-size: 13px; color: var(--text2); }
+  .sort-btn { padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border); background: none; cursor: pointer; color: var(--text2); }
   .sort-btn.active { background: var(--bg2); color: var(--text); border-color: var(--border2); }
 
   .item-table { width: 100%; border-collapse: collapse; }
-  .item-table th, .item-table td { padding: 10px; font-size: 14px; border-bottom: 0.5px solid var(--border); text-align: left; }
-  .r { text-align: right !important; }
-  .vol-badge { padding: 2px 9px; border-radius: 20px; font-size: 12px; }
+  .item-table th { font-size: 12px; color: var(--text2); text-align: left; padding: 8px; border-bottom: 0.5px solid var(--border); }
+  .item-table td { padding: 12px 8px; font-size: 14px; border-bottom: 0.5px solid var(--border); }
+  .r { text-align: right; }
+  
+  .price-val { font-variant-numeric: tabular-nums; font-weight: 500; }
+  .vol-badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; }
   .vol-high { background: #EAF3DE; color: #3B6D11; }
   .vol-low { background: #f1f0ec; color: #5F5E5A; }
-  .inline-edit { width: 100%; padding: 4px; border: 1px solid transparent; background: transparent; color: inherit; }
-  .inline-edit:focus { border-color: var(--border2); background: var(--bg); }
-  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; z-index: 200; }
-  .modal-backdrop.show { display: flex; }
-  .modal { background: var(--bg); padding: 24px; border-radius: var(--radius-lg); width: 320px; }
+
+  .del-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 14px; }
+  .del-btn:hover { color: var(--danger-text); }
+
+  .inline-edit { width: 100%; padding: 4px; border: 1px solid transparent; background: transparent; color: var(--text); }
+  .inline-edit:focus { border-color: var(--border2); background: var(--bg2); outline: none; }
 </style>
 </head>
 <body>
+
+<div id="loadingTips" class="loading-overlay">正在讀取道具資料庫...</div>
 
 <div class="app">
   <div class="header">
@@ -68,8 +173,7 @@
       <div class="subtitle">繁中版・巴哈姆特伺服器 · 資料來源：Universalis & Teamcraft</div>
     </div>
     <div class="header-right">
-      <span id="lastRefresh" style="font-size:12px; color:var(--text3); margin-right:10px;"></span>
-      <button class="btn btn-primary" onclick="refreshAll()">↻ 重新整理市場價</button>
+      <button class="btn btn-primary" onclick="refreshAll()">↻ 更新市場價格</button>
     </div>
   </div>
 
@@ -77,271 +181,303 @@
   <div id="tabContent"></div>
 </div>
 
-<div class="modal-backdrop" id="renameModal">
-  <div class="modal">
-    <h3>更改僱員名稱</h3>
-    <input type="text" id="renameInput" style="width:100%; margin: 10px 0; padding:8px;">
-    <div style="text-align:right;">
-      <button class="btn" onclick="closeRename()">取消</button>
-      <button class="btn btn-primary" onclick="confirmRename()">確認</button>
-    </div>
-  </div>
-</div>
-
 <script>
 const SERVER = 4033; 
 const UNI = 'https://universalis.app/api/v2';
 const PATH_TW = './FFXIV/tw-items.json';
-const PATH_INTL = './FFXIV/items.json';
+const PATH_EN = './FFXIV/items.json';
 
-let db_tw = {};
-let db_intl = {};
-let marketCache = JSON.parse(localStorage.getItem('ff14_market_cache') || '{}');
-let customTranslations = JSON.parse(localStorage.getItem('ff14_custom_trans') || '{}');
+// 固定僱員名單
+const RETAINER_NAMES = ['隱翠', '庫姆', '雲形'];
 
-// 排序狀態
-let activeSort = 'none'; // none, price, vol
-let sortDir = { price: 'asc', vol: 'desc' };
-
-let state = JSON.parse(localStorage.getItem('ff14retainer_v3') || 'null') || {
-  retainers: [
-    { name: '僱員一', items: [] },
-    { name: '僱員二', items: [] },
-    { name: '僱員三', items: [] }
-  ],
-  activeTab: 0
+let state = JSON.parse(localStorage.getItem('ff14_market_v3')) || {
+  retainers: RETAINER_NAMES.map(name => ({ name, items: [] })),
+  activeTab: 0,
+  customTranslations: {} // { id: "自訂繁中名" }
 };
 
+let itemDB = new Map(); // 格式: id -> { tw: "", en: "" }
+let marketCache = {};
+let searchTimer = null;
+let activeSort = 'none'; // 'none', 'price', 'vol'
+let sortDir = 1;
+
+// 初始化：載入 JSON 資料庫
 async function initDB() {
+  const tips = document.getElementById('loadingTips');
+  tips.style.display = 'block';
   try {
-    const [resTw, resIntl] = await Promise.all([
+    const [resTw, resEn] = await Promise.all([
       fetch(PATH_TW).then(r => r.json()),
-      fetch(PATH_INTL).then(r => r.json())
+      fetch(PATH_EN).then(r => r.json())
     ]);
-    db_tw = resTw;
-    db_intl = resIntl;
-    render();
-    refreshMarketDisplay();
+
+    // 先填入英文底稿
+    Object.keys(resEn).forEach(id => {
+      itemDB.set(id, { en: resEn[id].en, tw: null });
+    });
+
+    // 覆蓋繁中名稱
+    Object.keys(resTw).forEach(id => {
+      if(itemDB.has(id)) {
+        itemDB.get(id).tw = resTw[id].tw;
+      } else {
+        itemDB.set(id, { en: null, tw: resTw[id].tw });
+      }
+    });
+
+    console.log(`資料庫載入完成，共 ${itemDB.size} 筆道具`);
   } catch (e) {
-    alert("無法讀取 JSON 檔案，請確認路徑或是否在伺服器環境執行。");
+  } finally {
+    tips.style.display = 'none';
+    render();
+    autoFetchVisible();
   }
 }
 
 function save() {
-  localStorage.setItem('ff14retainer_v3', JSON.stringify(state));
-  localStorage.setItem('ff14_custom_trans', JSON.stringify(customTranslations));
-  localStorage.setItem('ff14_market_cache', JSON.stringify(marketCache));
+  localStorage.setItem('ff14_market_v3', JSON.stringify(state));
 }
 
-async function doSearch(q) {
+// ─── 搜尋邏輯 ───
+function onSearch(val) {
+  clearTimeout(searchTimer);
   const dd = document.getElementById('dd');
-  if (!q.trim()) { dd.classList.remove('show'); return; }
-  dd.innerHTML = '<div class="dd-item">搜尋中…</div>';
-  dd.classList.add('show');
+  if (!val.trim()) { dd.classList.remove('show'); return; }
 
-  const results = [];
-  const query = q.toLowerCase();
-
-  for (const [id, data] of Object.entries(db_tw)) {
-    if (data.tw && data.tw.toLowerCase().includes(query)) {
-      results.push({ id, name: data.tw, lang: 'TW' });
+  searchTimer = setTimeout(() => {
+    const query = val.toLowerCase();
+    const results = [];
+    
+    for (let [id, names] of itemDB) {
+      const twName = state.customTranslations[id] || names.tw;
+      const enName = names.en || "";
+      
+      // 優先權：1. 繁中包含 2. 英文包含
+      if (twName && twName.toLowerCase().includes(query)) {
+        results.push({ id, name: twName, type: 'tw' });
+      } else if (enName && enName.toLowerCase().includes(query)) {
+        results.push({ id, name: enName, type: 'en' });
+      }
+      
+      if (results.length > 100) break; // 效能保護
     }
-  }
 
-  if (results.length < 10) {
-    for (const [id, data] of Object.entries(db_intl)) {
-      if (results.some(r => r.id === id)) continue;
-      const match = ['en', 'ja', 'de', 'fr'].find(l => data[l] && data[l].toLowerCase().includes(query));
-      if (match) results.push({ id, name: data[match], lang: match.toUpperCase() });
-    }
-  }
-
-  if (results.length === 0) {
-    dd.innerHTML = '<div class="dd-item">找不到道具</div>';
-    return;
-  }
-
-  dd.innerHTML = results.slice(0, 15).map(item => `
-    <div class="dd-item" onmousedown="addItem(event,'${item.id}','${item.name.replace(/'/g, "\\'")}', '${item.lang}')">
-      <span>${item.name}</span>
-      <span class="dd-sub" style="float:right">#${item.id} (${item.lang})</span>
-    </div>
-  `).join('');
+    renderDropdown(results);
+  }, 200);
 }
 
-function addItem(e, id, originalName, lang) {
-  e.preventDefault();
+function renderDropdown(results) {
+  const dd = document.getElementById('dd');
+  if (results.length === 0) {
+    dd.innerHTML = '<div class="dd-item">找不到結果</div>';
+  } else {
+    dd.innerHTML = results.map(r => `
+      <div class="dd-item" onmousedown="addItem('${r.id}', '${r.name}', '${r.type}')">
+        <span class="${r.type === 'en' ? 'dd-en' : ''}">
+          ${r.name} ${r.type === 'en' ? '(EN-需翻譯)' : ''}
+        </span>
+        <span class="dd-tag">#${r.id}</span>
+      </div>
+    `).join('');
+  }
+  dd.classList.add('show');
+}
+
+// ─── 道具操作 ───
+function addItem(id, name, type) {
   const r = state.retainers[state.activeTab];
-  if (r.items.find(it => it.id === id)) return;
+  if (r.items.some(it => it.id === id)) return;
 
-  // 使用 unshift 讓新道具排在最前面
-  r.items.unshift({ id, name: originalName });
+  // 晚新增的在最上面 (unshift)
+  r.items.unshift({ id, name });
 
-  if (lang !== 'TW' && !customTranslations[id]) {
-    customTranslations[id] = originalName;
+  // 如果是從英文搜尋來的，自動加入自訂翻譯對象
+  if (type === 'en' && !state.customTranslations[id]) {
+    state.customTranslations[id] = name; 
   }
 
-  activeSort = 'none'; // 新增物品時重設排序，以顯示在最上方
   save();
   document.getElementById('searchInput').value = '';
   fetchMarket([id]);
   render();
 }
 
-// ─── 排序處理 ──────────────────────────────────────────────────────────
-function setSort(key) {
-  if (activeSort === key) {
-    sortDir[key] = sortDir[key] === 'asc' ? 'desc' : 'asc';
+function removeItem(id) {
+  const r = state.retainers[state.activeTab];
+  r.items = r.items.filter(it => it.id !== id);
+  save();
+  render();
+}
+
+function updateTranslation(id, newName) {
+  state.customTranslations[id] = newName;
+  save();
+  // 更新目前列表中的名稱顯示
+  state.retainers.forEach(r => {
+    r.items.forEach(it => { if(it.id === id) it.name = newName; });
+  });
+  render();
+}
+
+// ─── 介面渲染 ───
+function render() {
+  renderTabs();
+  const content = document.getElementById('tabContent');
+  
+  if (state.activeTab === 'custom') {
+    renderCustomPage(content);
+    return;
+  }
+
+  const r = state.retainers[state.activeTab];
+  const displayItems = getSortedItems(r.items);
+
+  content.innerHTML = `
+    <div class="panel">
+      <div class="search-row">
+        <input type="text" id="searchInput" placeholder="搜尋繁中或英文道具名稱..." oninput="onSearch(this.value)" onblur="hideDD()">
+        <div class="dropdown" id="dd"></div>
+      </div>
+
+      <div class="sort-bar">
+        <span>排序：</span>
+        <button class="sort-btn ${activeSort === 'price' ? 'active' : ''}" onclick="toggleSort('price')">最低單價 ${getSortIcon('price')}</button>
+        <button class="sort-btn ${activeSort === 'vol' ? 'active' : ''}" onclick="toggleSort('vol')">成交量 ${getSortIcon('vol')}</button>
+      </div>
+
+      <table class="item-table">
+        <thead>
+          <tr><th>道具名稱</th><th class="r">ID</th><th class="r">最低單價</th><th class="r">7日成交</th><th></th></tr>
+        </thead>
+        <tbody>
+          ${displayItems.map(it => renderRow(it)).join('')}
+        </tbody>
+      </table>
+      ${r.items.length === 0 ? '<div style="text-align:center; padding:40px; color:#999;">尚未新增道具</div>' : ''}
+    </div>
+  `;
+}
+
+function renderRow(item) {
+  const m = marketCache[item.id];
+  const pStr = (m && m.price) ? `<span class="price-val">${m.price.toLocaleString()}</span>` : '<span style="color:#ccc">---</span>';
+  const vStr = (m && m.vol !== undefined) ? `<span class="vol-badge ${m.vol > 20 ? 'vol-high' : 'vol-low'}">${m.vol}</span>` : '---';
+  
+  // 顯示名稱優先順序：自訂翻譯 > 資料庫繁中 > 原始記錄名
+  const displayName = state.customTranslations[item.id] || (itemDB.get(item.id)?.tw) || item.name;
+
+  return `
+    <tr>
+      <td><div style="font-weight:500">${displayName}</div></td>
+      <td class="r" style="font-size:11px; color:#aaa">${item.id}</td>
+      <td class="r">${pStr}</td>
+      <td class="r">${vStr}</td>
+      <td class="r"><button class="del-btn" onclick="removeItem('${item.id}')">✕</button></td>
+    </tr>
+  `;
+}
+
+function renderCustomPage(container) {
+  const list = Object.entries(state.customTranslations);
+  container.innerHTML = `
+    <div class="panel">
+      <h3>✦ 自訂翻譯名稱</h3>
+      <p style="font-size:12px; color:var(--text2); margin-bottom:15px;">在此編輯從英文搜尋加入或想改名的道具，修改後搜尋與列表將同步更新。</p>
+      <table class="item-table">
+        <thead><tr><th>ID</th><th>名稱 (點擊編輯)</th><th class="r">操作</th></tr></thead>
+        <tbody>
+          ${list.map(([id, name]) => `
+            <tr>
+              <td style="font-size:12px; color:#aaa">#${id}</td>
+              <td><input class="inline-edit" value="${name}" onchange="updateTranslation('${id}', this.value)"></td>
+              <td class="r"><button class="del-btn" onclick="delete state.customTranslations['${id}']; save(); render();">✕</button></td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+function renderTabs() {
+  const tabs = state.retainers.map((r, i) => `
+    <div class="tab ${state.activeTab === i ? 'active' : ''}" onclick="switchTab(${i})">${r.name}</div>
+  `).join('');
+  const custom = `<div class="tab ${state.activeTab === 'custom' ? 'active' : ''}" onclick="switchTab('custom')" style="margin-left:auto">✦ 自訂</div>`;
+  document.getElementById('tabBar').innerHTML = tabs + custom;
+}
+
+// ─── 排序與功能邏輯 ───
+function toggleSort(type) {
+  if (activeSort === type) {
+    sortDir *= -1;
   } else {
-    activeSort = key;
+    activeSort = type;
+    sortDir = -1; // 預設大到小
   }
   render();
+}
+
+function getSortIcon(type) {
+  if (activeSort !== type) return '';
+  return sortDir === -1 ? '↓' : '↑';
 }
 
 function getSortedItems(items) {
   if (activeSort === 'none') return items;
   
-  const sorted = [...items];
-  const dir = sortDir[activeSort] === 'asc' ? 1 : -1;
-
-  return sorted.sort((a, b) => {
-    const ma = marketCache[a.id] || {};
-    const mb = marketCache[b.id] || {};
-
-    if (activeSort === 'price') {
-      const pa = ma.price ?? (dir === 1 ? Infinity : -1);
-      const pb = mb.price ?? (dir === 1 ? Infinity : -1);
-      return (pa - pb) * dir;
-    } else if (activeSort === 'vol') {
-      const va = ma.vol ?? -1;
-      const vb = mb.vol ?? -1;
-      return (va - vb) * dir;
-    }
-    return 0;
+  return [...items].sort((a, b) => {
+    const ma = marketCache[a.id] || { price: 0, vol: 0 };
+    const mb = marketCache[b.id] || { price: 0, vol: 0 };
+    const valA = activeSort === 'price' ? (ma.price || 0) : (ma.vol || 0);
+    const valB = activeSort === 'price' ? (mb.price || 0) : (mb.vol || 0);
+    return (valA - valB) * sortDir;
   });
 }
 
-function render() {
-  renderTabs();
-  renderContent();
+function switchTab(i) {
+  state.activeTab = i;
+  activeSort = 'none'; // 切換分頁重置排序，恢復「晚新增在上面」
+  save();
+  render();
 }
 
-function renderTabs() {
-  const retainerTabs = state.retainers.map((r, i) => `
-    <button class="tab ${state.activeTab === i ? 'active' : ''}" onclick="switchTab(${i})">
-      ${r.name} <span onclick="event.stopPropagation(); openRename(${i})">✎</span>
-    </button>
-  `).join('');
-  const customTab = `<button class="tab ${state.activeTab === 'custom' ? 'active' : ''}" onclick="switchTab('custom')" style="margin-left:auto">✦ 自訂翻譯</button>`;
-  document.getElementById('tabBar').innerHTML = retainerTabs + customTab;
-}
+function hideDD() { setTimeout(() => document.getElementById('dd').classList.remove('show'), 200); }
 
-function renderContent() {
-  if (state.activeTab === 'custom') { renderCustomTab(); return; }
-  const r = state.retainers[state.activeTab];
-  const sorted = getSortedItems(r.items);
-  
-  document.getElementById('tabContent').innerHTML = `
-    <div class="panel">
-      <div class="search-row">
-        <input type="text" id="searchInput" placeholder="輸入名稱搜尋（繁中、英、日）…" oninput="doSearch(this.value)" onblur="hideDD()">
-        <div class="dropdown" id="dd"></div>
-      </div>
-      
-      <div class="sort-bar">
-        <span>排序方式：</span>
-        <button class="sort-btn ${activeSort === 'price' ? 'active' : ''}" onclick="setSort('price')">
-          最低單價 ${activeSort === 'price' ? (sortDir.price === 'asc' ? '↑' : '↓') : ''}
-        </button>
-        <button class="sort-btn ${activeSort === 'vol' ? 'active' : ''}" onclick="setSort('vol')">
-          7日成交量 ${activeSort === 'vol' ? (sortDir.vol === 'asc' ? '↑' : '↓') : ''}
-        </button>
-        ${activeSort !== 'none' ? '<button class="sort-btn" onclick="activeSort=\'none\';render()">重設</button>' : ''}
-      </div>
-
-      <table class="item-table">
-        <thead><tr><th>道具名稱</th><th>ID</th><th class="r">最低價</th><th class="r">7日銷量</th><th></th></tr></thead>
-        <tbody>${sorted.map(it => renderRow(it)).join('')}</tbody>
-      </table>
-    </div>`;
-}
-
-function renderRow(item) {
-  const displayName = customTranslations[item.id] || (db_tw[item.id] ? db_tw[item.id].tw : item.name);
-  const m = marketCache[item.id] || {};
-  return `<tr>
-    <td><div style="font-weight:500">${displayName}</div></td>
-    <td style="color:#a09f9b; font-size:12px">#${item.id}</td>
-    <td class="r">${m.price ? m.price.toLocaleString() + ' gil' : '---'}</td>
-    <td class="r"><span class="vol-badge ${m.vol > 20 ? 'vol-high' : 'vol-low'}">${m.vol || 0}</span></td>
-    <td class="r"><button class="btn" onclick="removeItem('${item.id}')">✕</button></td>
-  </tr>`;
-}
-
-function renderCustomTab() {
-  const ids = Object.keys(customTranslations);
-  document.getElementById('tabContent').innerHTML = `
-    <div class="panel">
-      <h3>自訂翻譯管理</h3>
-      <table class="item-table">
-        <thead><tr><th>ID</th><th>顯示名稱 (點擊編輯)</th><th>操作</th></tr></thead>
-        <tbody>${ids.map(id => `
-          <tr>
-            <td>#${id}</td>
-            <td><input class="inline-edit" value="${customTranslations[id]}" onchange="updateTrans('${id}', this.value)"></td>
-            <td><button class="btn" onclick="deleteTrans('${id}')">刪除</button></td>
-          </tr>`).join('')}
-        </tbody>
-      </table>
-    </div>`;
-}
-
-function updateTrans(id, val) { customTranslations[id] = val; save(); render(); }
-function deleteTrans(id) { delete customTranslations[id]; save(); render(); }
-function switchTab(i) { state.activeTab = i; activeSort = 'none'; render(); }
-function hideDD() { setTimeout(() => { if(document.getElementById('dd')) document.getElementById('dd').classList.remove('show')}, 200); }
-function removeItem(id) {
-  state.retainers[state.activeTab].items = state.retainers[state.activeTab].items.filter(i => i.id !== id);
-  save(); render();
-}
-
+// ─── 市場資料獲取 (Universalis) ───
 async function fetchMarket(ids) {
   if (!ids.length) return;
   try {
     const res = await fetch(`${UNI}/${SERVER}/${ids.join(',')}?entriesWithin=604800`);
     const data = await res.json();
-    const update = (id, d) => {
-      marketCache[id] = {
-        price: d.listings?.[0]?.pricePerUnit || null,
-        vol: d.recentHistory?.reduce((acc, cur) => acc + cur.quantity, 0) || 0
-      };
+    
+    const updateCache = (id, info) => {
+      const price = info.listings?.[0]?.pricePerUnit || 0;
+      const vol = info.recentHistory?.reduce((sum, h) => sum + h.quantity, 0) || 0;
+      marketCache[id] = { price, vol };
     };
-    if (ids.length === 1) update(ids[0], data);
-    else Object.keys(data.items).forEach(id => update(id, data.items[id]));
-    save(); render();
-  } catch (e) { console.error("市場資料抓取失敗"); }
+
+    if (ids.length === 1) {
+      updateCache(ids[0], data);
+    } else {
+      Object.keys(data.items).forEach(id => updateCache(id, data.items[id]));
+    }
+    render();
+  } catch (e) { console.error("價格更新失敗"); }
+}
+
+function autoFetchVisible() {
+  const allIds = state.retainers.flatMap(r => r.items.map(it => it.id));
+  if (allIds.length) fetchMarket(allIds);
 }
 
 function refreshAll() {
-  const allIds = [...new Set(state.retainers.flatMap(r => r.items.map(i => i.id)))];
-  fetchMarket(allIds);
-  const now = new Date();
-  document.getElementById('lastRefresh').textContent = `更新: ${now.getHours()}:${now.getMinutes()}`;
+  marketCache = {};
+  autoFetchVisible();
 }
 
-let renamingIdx = null;
-function openRename(i) {
-  renamingIdx = i;
-  document.getElementById('renameInput').value = state.retainers[i].name;
-  document.getElementById('renameModal').classList.add('show');
-}
-function closeRename() { document.getElementById('renameModal').classList.remove('show'); }
-function confirmRename() {
-  const val = document.getElementById('renameInput').value.trim();
-  if(val) { state.retainers[renamingIdx].name = val; save(); render(); }
-  closeRename();
-}
-
+// 啟動
 initDB();
 </script>
 </body>
