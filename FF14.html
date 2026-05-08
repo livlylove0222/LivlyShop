@@ -40,6 +40,12 @@
   .dd-item { padding: 9px 13px; font-size: 14px; cursor: pointer; border-bottom: 0.5px solid var(--border); }
   .dd-item:hover { background: var(--bg2); }
   .dd-sub { font-size: 12px; color: var(--text2); }
+  
+  /* 排序列樣式 */
+  .sort-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; font-size: 13px; color: var(--text2); }
+  .sort-btn { padding: 4px 12px; font-size: 12px; border-radius: 20px; border: 0.5px solid var(--border); background: transparent; cursor: pointer; color: var(--text2); transition: all 0.12s; }
+  .sort-btn.active { background: var(--bg2); color: var(--text); border-color: var(--border2); }
+
   .item-table { width: 100%; border-collapse: collapse; }
   .item-table th, .item-table td { padding: 10px; font-size: 14px; border-bottom: 0.5px solid var(--border); text-align: left; }
   .r { text-align: right !important; }
@@ -93,6 +99,10 @@ let db_intl = {};
 let marketCache = JSON.parse(localStorage.getItem('ff14_market_cache') || '{}');
 let customTranslations = JSON.parse(localStorage.getItem('ff14_custom_trans') || '{}');
 
+// 排序狀態
+let activeSort = 'none'; // none, price, vol
+let sortDir = { price: 'asc', vol: 'desc' };
+
 let state = JSON.parse(localStorage.getItem('ff14retainer_v3') || 'null') || {
   retainers: [
     { name: '僱員一', items: [] },
@@ -102,7 +112,6 @@ let state = JSON.parse(localStorage.getItem('ff14retainer_v3') || 'null') || {
   activeTab: 0
 };
 
-// ─── 初始化：載入 JSON 資料庫 ──────────────────────────────────────────
 async function initDB() {
   try {
     const [resTw, resIntl] = await Promise.all([
@@ -111,7 +120,6 @@ async function initDB() {
     ]);
     db_tw = resTw;
     db_intl = resIntl;
-    console.log("資料庫載入成功");
     render();
     refreshMarketDisplay();
   } catch (e) {
@@ -125,32 +133,26 @@ function save() {
   localStorage.setItem('ff14_market_cache', JSON.stringify(marketCache));
 }
 
-// ─── 搜尋邏輯：支援多語言備援 ──────────────────────────────────────────
-async function doSearch(q, isCustomTab = false) {
+async function doSearch(q) {
   const dd = document.getElementById('dd');
   if (!q.trim()) { dd.classList.remove('show'); return; }
-  
   dd.innerHTML = '<div class="dd-item">搜尋中…</div>';
   dd.classList.add('show');
 
   const results = [];
   const query = q.toLowerCase();
 
-  // 1. 優先搜繁中 (tw-items.json)
   for (const [id, data] of Object.entries(db_tw)) {
     if (data.tw && data.tw.toLowerCase().includes(query)) {
       results.push({ id, name: data.tw, lang: 'TW' });
     }
   }
 
-  // 2. 如果結果不多，搜國際版 (items.json)
   if (results.length < 10) {
     for (const [id, data] of Object.entries(db_intl)) {
-      if (results.some(r => r.id === id)) continue; // 跳過已找到的
+      if (results.some(r => r.id === id)) continue;
       const match = ['en', 'ja', 'de', 'fr'].find(l => data[l] && data[l].toLowerCase().includes(query));
-      if (match) {
-        results.push({ id, name: data[match], lang: match.toUpperCase() });
-      }
+      if (match) results.push({ id, name: data[match], lang: match.toUpperCase() });
     }
   }
 
@@ -159,35 +161,66 @@ async function doSearch(q, isCustomTab = false) {
     return;
   }
 
-  const addFn = isCustomTab ? 'addCustomItem' : 'addItem';
   dd.innerHTML = results.slice(0, 15).map(item => `
-    <div class="dd-item" onmousedown="${addFn}(event,'${item.id}','${item.name}', '${item.lang}')">
+    <div class="dd-item" onmousedown="addItem(event,'${item.id}','${item.name.replace(/'/g, "\\'")}', '${item.lang}')">
       <span>${item.name}</span>
       <span class="dd-sub" style="float:right">#${item.id} (${item.lang})</span>
     </div>
   `).join('');
 }
 
-// ─── 核心功能：新增道具與自動翻譯註冊 ───────────────────────────────────
 function addItem(e, id, originalName, lang) {
   e.preventDefault();
   const r = state.retainers[state.activeTab];
   if (r.items.find(it => it.id === id)) return;
 
-  r.items.push({ id, name: originalName });
+  // 使用 unshift 讓新道具排在最前面
+  r.items.unshift({ id, name: originalName });
 
-  // 如果這不是繁中資料庫的內容，自動加入自訂翻譯
   if (lang !== 'TW' && !customTranslations[id]) {
-    customTranslations[id] = originalName; // 先填入原文，讓使用者去自訂分頁改
+    customTranslations[id] = originalName;
   }
 
+  activeSort = 'none'; // 新增物品時重設排序，以顯示在最上方
   save();
   document.getElementById('searchInput').value = '';
   fetchMarket([id]);
   render();
 }
 
-// ─── UI 渲染 ───────────────────────────────────────────────────────────
+// ─── 排序處理 ──────────────────────────────────────────────────────────
+function setSort(key) {
+  if (activeSort === key) {
+    sortDir[key] = sortDir[key] === 'asc' ? 'desc' : 'asc';
+  } else {
+    activeSort = key;
+  }
+  render();
+}
+
+function getSortedItems(items) {
+  if (activeSort === 'none') return items;
+  
+  const sorted = [...items];
+  const dir = sortDir[activeSort] === 'asc' ? 1 : -1;
+
+  return sorted.sort((a, b) => {
+    const ma = marketCache[a.id] || {};
+    const mb = marketCache[b.id] || {};
+
+    if (activeSort === 'price') {
+      const pa = ma.price ?? (dir === 1 ? Infinity : -1);
+      const pb = mb.price ?? (dir === 1 ? Infinity : -1);
+      return (pa - pb) * dir;
+    } else if (activeSort === 'vol') {
+      const va = ma.vol ?? -1;
+      const vb = mb.vol ?? -1;
+      return (va - vb) * dir;
+    }
+    return 0;
+  });
+}
+
 function render() {
   renderTabs();
   renderContent();
@@ -206,6 +239,7 @@ function renderTabs() {
 function renderContent() {
   if (state.activeTab === 'custom') { renderCustomTab(); return; }
   const r = state.retainers[state.activeTab];
+  const sorted = getSortedItems(r.items);
   
   document.getElementById('tabContent').innerHTML = `
     <div class="panel">
@@ -213,18 +247,28 @@ function renderContent() {
         <input type="text" id="searchInput" placeholder="輸入名稱搜尋（繁中、英、日）…" oninput="doSearch(this.value)" onblur="hideDD()">
         <div class="dropdown" id="dd"></div>
       </div>
+      
+      <div class="sort-bar">
+        <span>排序方式：</span>
+        <button class="sort-btn ${activeSort === 'price' ? 'active' : ''}" onclick="setSort('price')">
+          最低單價 ${activeSort === 'price' ? (sortDir.price === 'asc' ? '↑' : '↓') : ''}
+        </button>
+        <button class="sort-btn ${activeSort === 'vol' ? 'active' : ''}" onclick="setSort('vol')">
+          7日成交量 ${activeSort === 'vol' ? (sortDir.vol === 'asc' ? '↑' : '↓') : ''}
+        </button>
+        ${activeSort !== 'none' ? '<button class="sort-btn" onclick="activeSort=\'none\';render()">重設</button>' : ''}
+      </div>
+
       <table class="item-table">
         <thead><tr><th>道具名稱</th><th>ID</th><th class="r">最低價</th><th class="r">7日銷量</th><th></th></tr></thead>
-        <tbody>${r.items.map(it => renderRow(it)).join('')}</tbody>
+        <tbody>${sorted.map(it => renderRow(it)).join('')}</tbody>
       </table>
     </div>`;
 }
 
 function renderRow(item) {
-  // 名稱顯示邏輯：自訂翻譯 > 繁中庫 > 原始新增名稱
   const displayName = customTranslations[item.id] || (db_tw[item.id] ? db_tw[item.id].tw : item.name);
   const m = marketCache[item.id] || {};
-  
   return `<tr>
     <td><div style="font-weight:500">${displayName}</div></td>
     <td style="color:#a09f9b; font-size:12px">#${item.id}</td>
@@ -239,9 +283,8 @@ function renderCustomTab() {
   document.getElementById('tabContent').innerHTML = `
     <div class="panel">
       <h3>自訂翻譯管理</h3>
-      <p style="font-size:12px; color:var(--text2); margin-bottom:15px;">搜尋國際版新增的道具會自動列在此處，點擊名稱可直接修改為繁體中文。</p>
       <table class="item-table">
-        <thead><tr><th>ID</th><th>原文/顯示名稱 (點擊編輯)</th><th>操作</th></tr></thead>
+        <thead><tr><th>ID</th><th>顯示名稱 (點擊編輯)</th><th>操作</th></tr></thead>
         <tbody>${ids.map(id => `
           <tr>
             <td>#${id}</td>
@@ -253,11 +296,10 @@ function renderCustomTab() {
     </div>`;
 }
 
-// ─── 功能函數 ─────────────────────────────────────────────────────────
 function updateTrans(id, val) { customTranslations[id] = val; save(); render(); }
 function deleteTrans(id) { delete customTranslations[id]; save(); render(); }
-function switchTab(i) { state.activeTab = i; render(); }
-function hideDD() { setTimeout(() => document.getElementById('dd').classList.remove('show'), 200); }
+function switchTab(i) { state.activeTab = i; activeSort = 'none'; render(); }
+function hideDD() { setTimeout(() => { if(document.getElementById('dd')) document.getElementById('dd').classList.remove('show')}, 200); }
 function removeItem(id) {
   state.retainers[state.activeTab].items = state.retainers[state.activeTab].items.filter(i => i.id !== id);
   save(); render();
@@ -276,7 +318,7 @@ async function fetchMarket(ids) {
     };
     if (ids.length === 1) update(ids[0], data);
     else Object.keys(data.items).forEach(id => update(id, data.items[id]));
-    save(); refreshMarketDisplay();
+    save(); render();
   } catch (e) { console.error("市場資料抓取失敗"); }
 }
 
@@ -284,14 +326,23 @@ function refreshAll() {
   const allIds = [...new Set(state.retainers.flatMap(r => r.items.map(i => i.id)))];
   fetchMarket(allIds);
   const now = new Date();
-  document.getElementById('lastRefresh').textContent = `上次更新: ${now.getHours()}:${now.getMinutes()}`;
+  document.getElementById('lastRefresh').textContent = `更新: ${now.getHours()}:${now.getMinutes()}`;
 }
 
-function refreshMarketDisplay() { render(); }
+let renamingIdx = null;
+function openRename(i) {
+  renamingIdx = i;
+  document.getElementById('renameInput').value = state.retainers[i].name;
+  document.getElementById('renameModal').classList.add('show');
+}
+function closeRename() { document.getElementById('renameModal').classList.remove('show'); }
+function confirmRename() {
+  const val = document.getElementById('renameInput').value.trim();
+  if(val) { state.retainers[renamingIdx].name = val; save(); render(); }
+  closeRename();
+}
 
-// ─── 初始啟動 ─────────────────────────────────────────────────────────
 initDB();
-
 </script>
 </body>
 </html>
