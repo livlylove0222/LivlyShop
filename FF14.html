@@ -361,10 +361,20 @@ function render() {
 
 function renderRow(item) {
   const m = marketCache[item.id];
-  const pStr = (m && m.price) ? `<span class="price-val">${m.price.toLocaleString()}</span>` : '<span style="color:#ccc">---</span>';
-  const vStr = (m && m.vol !== undefined) ? `<span class="vol-badge ${m.vol > 20 ? 'vol-high' : 'vol-low'}">${m.vol}</span>` : '---';
+  let pStr, vStr;
+
+  if (m === 'loading') {
+    // 照你要求的：單價顯示 ---，成交顯示 Loading
+    pStr = '<span style="color:var(--text3)">---</span>';
+    vStr = '<span style="color:var(--accent); font-size: 11px;">Loading</span>';
+  } else if (m && m.price !== undefined) {
+    pStr = m.price > 0 ? `<span class="price-val">${m.price.toLocaleString()}</span>` : '<span style="color:#ccc">---</span>';
+    vStr = `<span class="vol-badge ${m.vol > 20 ? 'vol-high' : 'vol-low'}">${m.vol}</span>`;
+  } else {
+    pStr = '<span style="color:#ccc">---</span>';
+    vStr = '<span style="color:#ccc">---</span>';
+  }
   
-  // 顯示名稱優先順序：自訂翻譯 > 資料庫繁中 > 原始記錄名
   const displayName = state.customTranslations[item.id] || (itemDB.get(item.id)?.tw) || item.name;
 
   return `
@@ -447,24 +457,50 @@ function hideDD() { setTimeout(() => document.getElementById('dd').classList.rem
 
 // ─── 市場資料獲取 (Universalis) ───
 async function fetchMarket(ids) {
-  if (!ids.length) return;
-  try {
-    const res = await fetch(`${UNI}/${SERVER}/${ids.join(',')}?entriesWithin=604800`);
-    const data = await res.json();
-    
-    const updateCache = (id, info) => {
-      const price = info.listings?.[0]?.pricePerUnit || 0;
-      const vol = info.recentHistory?.reduce((sum, h) => sum + h.quantity, 0) || 0;
-      marketCache[id] = { price, vol };
-    };
+  if (!ids || !ids.length) return;
+  
+  // 將所有傳入的 ID 先標記為 loading 並更新畫面
+  ids.forEach(id => { marketCache[id] = 'loading'; });
+  render();
 
-    if (ids.length === 1) {
-      updateCache(ids[0], data);
-    } else {
-      Object.keys(data.items).forEach(id => updateCache(id, data.items[id]));
+  // 每 20 筆一組
+  const chunkSize = 20;
+  for (let i = 0; i < ids.length; i += chunkSize) {
+    const chunk = ids.slice(i, i + chunkSize);
+    
+    try {
+      const res = await fetch(`${UNI}/${SERVER}/${chunk.join(',')}?entriesWithin=604800`);
+      const data = await res.json();
+      
+      const updateCache = (itemId, info) => {
+        if (!info) {
+          marketCache[itemId] = { price: 0, vol: 0 };
+          return;
+        }
+        const price = info.listings?.[0]?.pricePerUnit || 0;
+        const vol = info.recentHistory?.reduce((sum, h) => sum + h.quantity, 0) || 0;
+        marketCache[itemId] = { price, vol };
+      };
+
+      if (chunk.length === 1) {
+        updateCache(chunk[0], data);
+      } else {
+        const itemsData = data.items || {};
+        chunk.forEach(id => updateCache(id, itemsData[id]));
+      }
+    } catch (e) {
+      console.error("分組更新失敗", e);
+      chunk.forEach(id => { marketCache[id] = { price: 0, vol: 0 }; });
     }
+
+    // 更新當前進度到畫面上
     render();
-  } catch (e) { console.error("價格更新失敗"); }
+
+    // 如果還有下一組，就等待 1 秒再繼續
+    if (i + chunkSize < ids.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+  }
 }
 
 function autoFetchVisible() {
@@ -473,8 +509,14 @@ function autoFetchVisible() {
 }
 
 function refreshAll() {
+  // 提取所有僱員分頁中的所有道具 ID (去重複)
+  const allIds = [...new Set(state.retainers.flatMap(r => r.items.map(it => it.id)))];
+  
+  if (allIds.length === 0) return;
+  
+  // 清空快取並啟動分組排隊更新
   marketCache = {};
-  autoFetchVisible();
+  fetchMarket(allIds);
 }
 
 // 啟動
