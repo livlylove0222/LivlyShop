@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link rel="icon" href="/LivlyShop/favicon.ico">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.42.0/dist/tabler-icons.min.css">
 <title>FF14 僱員市場分析 · 巴哈姆特</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -301,10 +300,12 @@
   }
 
   .item-table th.r { text-align: right; }
-  .item-table th:first-child { width: 40%; }
-  .item-table th:nth-child(2) { width: 25%; }
-  .item-table th:nth-child(3) { width: 25%; }
-  .item-table th:last-child { width: 10%; }
+  .item-table th:first-child { width: 35%; }
+  .item-table th:nth-child(2) { width: 12%; }
+  .item-table th:nth-child(3) { width: 22%; }
+  .item-table th:nth-child(4) { width: 22%; }
+  .item-table th:last-child { width: 9%; }
+  .item-id { font-size: 12px; color: var(--text3); font-variant-numeric: tabular-nums; }
 
   .item-table td {
     padding: 10px 10px;
@@ -359,6 +360,23 @@
   }
 
   .del-btn:hover { color: var(--danger-text); background: var(--danger-bg); }
+
+  /* inline edit for custom tab */
+  .inline-edit {
+    width: 100%;
+    padding: 4px 7px;
+    border: 0.5px solid transparent;
+    border-radius: var(--radius);
+    background: transparent;
+    color: var(--text);
+    font-size: 14px;
+    font-family: inherit;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.12s, background 0.12s;
+  }
+  .inline-edit:hover { border-color: var(--border); background: var(--bg2); }
+  .inline-edit:focus { border-color: var(--border2); background: var(--bg); }
 
   /* Empty state */
   .empty {
@@ -436,7 +454,7 @@
   <div class="header">
     <div>
       <div class="title">⚔️ FF14 僱員市場分析</div>
-      <div class="subtitle">繁中版・巴哈姆特伺服器 · 資料來源：Universalis & XIVAPI</div>
+      <div class="subtitle">繁中版・巴哈姆特伺服器 · 資料來源：Universalis & CaféMaker</div>
     </div>
     <div class="header-right">
       <span class="refresh-info" id="lastRefresh"></span>
@@ -461,8 +479,58 @@
 
 <script>
 const SERVER = 4033; // 繁中版巴哈姆特（id:4033），非日服Gaia的Bahamut（id:69）
-const XIVAPI = 'https://v2.xivapi.com';
-const UNI = 'https://universalis.app/api/v2';
+const CAFE  = 'https://cafemaker.wakingsands.com';
+const UNI   = 'https://universalis.app/api/v2';
+
+// ─── 繁→簡轉換表（常見差異字，不足時靠 custom_items.json 補充）────────────
+const TW2CHS_MAP = {
+  '紅':'红','藍':'蓝','綠':'绿','銀':'银','鐵':'铁','銅':'铜','鋼':'钢',
+  '劍':'剑','藥':'药','樹':'树','礦':'矿','魚':'鱼','獸':'兽','鳥':'鸟',
+  '蟲':'虫','龍':'龙','鳳':'凤','獅':'狮','傳':'传','術':'术','靈':'灵',
+  '聖':'圣','輕':'轻','強':'强','軟':'软','細':'细','舊':'旧','優':'优',
+  '貴':'贵','純':'纯','濃':'浓','飾':'饰','錦':'锦','絲':'丝','齒':'齿',
+  '翼':'翼','鱗':'鳞','殼':'壳','膽':'胆','漿':'浆','蠟':'蜡','膠':'胶',
+  '鹽':'盐','醬':'酱','湯':'汤','麵':'面','麥':'麦','種':'种','實':'实',
+  '葉':'叶','莖':'茎','蓮':'莲','蘭':'兰','蓟':'蓟','鹹':'咸','鮮':'鲜',
+  '澀':'涩','韌':'韧','濁':'浊','渾':'浑','燦':'灿','閃':'闪','輝':'辉',
+  '紋':'纹','帶':'带','條':'条','塊':'块','錠':'锭','籃':'篮','爐':'炉',
+  '鍋':'锅','盤':'盘','壺':'壶','錘':'锤','鋸':'锯','鑿':'凿','鑽':'钻',
+  '針':'针','鉤':'钩','繩':'绳','鏈':'链','鎖':'锁','鍵':'键','鐲':'镯',
+  '鍊':'链','冠':'冠','褲':'裤','靴':'靴','槍':'枪','書':'书','圖':'图',
+  '冊':'册','紙':'纸','筆':'笔','燈':'灯','鏡':'镜','畫':'画','寶':'宝',
+  '遺':'遗','廢':'废','損':'损','殘':'残','珀':'珀','瑪':'玛','璃':'璃',
+  '琉':'琉','瓏':'珑','瑩':'莹','臺':'台','體':'体','會':'会','來':'来',
+  '國':'国','學':'学','說':'说','頭':'头','長':'长','開':'开','時':'时',
+  '問':'问','關':'关','現':'现','點':'点','這':'这','對':'对','動':'动',
+  '為':'为','樣':'样','進':'进','過':'过','後':'后','發':'发','還':'还',
+  '從':'从','給':'给','經':'经','個':'个','們':'们','邊':'边','裡':'里',
+  '見':'见','買':'买','賣':'卖','線':'线','網':'网','號':'号','讓':'让',
+  '間':'间','變':'变','薑':'姜','蔥':'葱',
+};
+
+function tw2chs(str) {
+  return str.split('').map(c => TW2CHS_MAP[c] || c).join('');
+}
+
+// ─── 簡→繁轉換表（與 TW2CHS_MAP 互為對照，用於自動填入繁中欄位）──────────
+const CHS2TW_MAP = {};
+Object.entries(TW2CHS_MAP).forEach(([tw, chs]) => {
+  // 若簡體字尚未被登記（避免多對一覆蓋），才加入
+  if (!CHS2TW_MAP[chs]) CHS2TW_MAP[chs] = tw;
+});
+
+function chs2tw(str) {
+  return str.split('').map(c => CHS2TW_MAP[c] || c).join('');
+}
+
+// ─── 自訂道具清單（localStorage）────────────────────────────────────────────
+function loadCustomItems() {
+  customItems = JSON.parse(localStorage.getItem('ff14_custom_items') || '[]');
+}
+
+function saveCustomItems() {
+  localStorage.setItem('ff14_custom_items', JSON.stringify(customItems));
+}
 
 let state = JSON.parse(localStorage.getItem('ff14retainer_v2') || 'null') || {
   retainers: [
@@ -473,6 +541,7 @@ let state = JSON.parse(localStorage.getItem('ff14retainer_v2') || 'null') || {
   activeTab: 0
 };
 
+let customItems = [];
 let marketCache = {};
 let activeSort = 'price';
 let sortDir = { price: 'asc', vol: 'desc' };
@@ -491,15 +560,21 @@ function render() {
 }
 
 function renderTabs() {
-  document.getElementById('tabBar').innerHTML = state.retainers.map((r, i) => `
-    <button class="tab ${i === state.activeTab ? 'active' : ''}" onclick="switchTab(${i})">
+  const retainerTabs = state.retainers.map((r, i) => `
+    <button class="tab ${state.activeTab === i ? 'active' : ''}" onclick="switchTab(${i})">
       ${esc(r.name)}
       <button class="tab-edit-btn" onclick="event.stopPropagation(); openRename(${i})" title="重新命名" aria-label="重新命名">✎</button>
     </button>
   `).join('');
+  const customTab = `
+    <button class="tab ${state.activeTab === 'custom' ? 'active' : ''}" onclick="switchTab('custom')" style="margin-left:auto">
+      ✦ 自訂道具
+    </button>`;
+  document.getElementById('tabBar').innerHTML = retainerTabs + customTab;
 }
 
 function renderContent() {
+  if (state.activeTab === 'custom') { renderCustomTab(); return; }
   const r = state.retainers[state.activeTab];
   const sorted = getSorted(state.activeTab);
   const hasItems = r.items.length > 0;
@@ -536,6 +611,7 @@ function renderContent() {
         <table class="item-table">
           <thead><tr>
             <th>道具名稱</th>
+            <th>Item ID</th>
             <th class="r">最低單價</th>
             <th class="r">近期成交量</th>
             <th></th>
@@ -584,8 +660,8 @@ function renderRow(item) {
   return `<tr>
     <td>
       <div class="item-name">${esc(item.name)}</div>
-      ${item.nameEn ? `<div class="item-sub">${esc(item.nameEn)}</div>` : ''}
     </td>
+    <td><span class="item-id">${esc(item.id)}</span></td>
     <td class="r">${priceCell}</td>
     <td class="r">${volCell}</td>
     <td style="text-align:right">
@@ -618,6 +694,88 @@ function switchTab(i) {
   state.activeTab = i;
   save();
   render();
+}
+
+// ─── 自訂道具分頁 ─────────────────────────────────────────────────────────────
+
+function renderCustomTab() {
+  document.getElementById('tabContent').innerHTML = `
+    <div class="panel">
+      <div class="search-row">
+        <input type="text" id="customSearchInput"
+          placeholder="搜尋道具新增至自訂清單（繁中、簡中或英文）…"
+          autocomplete="off"
+          oninput="onCustomSearch(this.value)"
+          onblur="hideDD()">
+        <div class="dropdown" id="dd"></div>
+      </div>
+      <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
+        新增後可直接編輯繁中名稱欄位。搜尋時會優先使用繁中名稱顯示。
+      </p>
+      ${customItems.length > 0 ? `
+      <table class="item-table">
+        <thead><tr>
+          <th style="width:35%">繁中名稱（可編輯）</th>
+          <th style="width:30%">簡中名稱</th>
+          <th style="width:20%">Item ID</th>
+          <th style="width:15%"></th>
+        </tr></thead>
+        <tbody>
+          ${customItems.map((it, idx) => `<tr>
+            <td>
+              <input class="inline-edit" value="${esc(it.name_tw)}"
+                onchange="updateCustomTw(${idx}, this.value)"
+                title="點擊編輯繁中名稱">
+            </td>
+            <td style="color:var(--text2);font-size:13px">${esc(it.name_chs)}</td>
+            <td><span class="item-id">${esc(String(it.id))}</span></td>
+            <td style="text-align:right">
+              <button class="del-btn" onclick="removeCustomItem(${idx})" title="從自訂清單移除">✕</button>
+            </td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      ` : `
+      <div class="empty">
+        <div class="empty-icon">📝</div>
+        <p>尚無自訂道具。搜尋並新增後，可在此編輯繁中名稱。</p>
+      </div>
+      `}
+    </div>
+  `;
+}
+
+function onCustomSearch(val) {
+  clearTimeout(searchTimer);
+  if (val.length < 1) { hideDD(); return; }
+  searchTimer = setTimeout(() => doSearch(val, true), 380);
+}
+
+function updateCustomTw(idx, val) {
+  customItems[idx].name_tw = val.trim();
+  saveCustomItems();
+  // 不需要重新 render 整個頁面，保持輸入焦點
+}
+
+function removeCustomItem(idx) {
+  customItems.splice(idx, 1);
+  saveCustomItems();
+  renderCustomTab();
+}
+
+function addCustomItem(e, id, name_chs) {
+  e.preventDefault();
+  if (customItems.find(it => String(it.id) === String(id))) {
+    alert('此道具已在自訂清單中');
+    return;
+  }
+  const name_tw = chs2tw(name_chs);
+  customItems.push({ id: Number(id), name_tw, name_chs });
+  saveCustomItems();
+  const inp = document.getElementById('customSearchInput');
+  if (inp) inp.value = '';
+  hideDD();
+  renderCustomTab();
 }
 
 function openRename(i) {
@@ -662,7 +820,7 @@ function setSort(key) {
   render();
 }
 
-// ─── Search (XIVAPI v2) ───────────────────────────────────────────────────────
+// ─── Search（優先自訂清單，其次 CaféMaker 簡體搜尋）───────────────────────────
 
 function onSearch(val) {
   clearTimeout(searchTimer);
@@ -670,35 +828,51 @@ function onSearch(val) {
   searchTimer = setTimeout(() => doSearch(val), 380);
 }
 
-async function doSearch(q) {
+async function doSearch(q, isCustomTab = false) {
   const dd = document.getElementById('dd');
   if (!dd) return;
   dd.innerHTML = '<div class="dd-item" style="color:var(--text2)">搜尋中…</div>';
   dd.classList.add('show');
+
+  // 1. 先比對自訂清單（繁中名稱完整比對）
+  const customHits = customItems.filter(it =>
+    it.name_tw && it.name_tw.includes(q)
+  );
+
+  // 2. CaféMaker 搜尋（繁→簡轉換後送出）
+  let cafeResults = [];
   try {
-    // XIVAPI v2：用 ~ 做模糊比對，同時搜尋多語言名稱
-    // ItemSearchCategory.ID > 0 過濾掉不可交易的道具（ID=0為不可上市）
-    const encoded = encodeURIComponent(`+Name~"${q}" +ItemSearchCategory.ID>0`);
-    const url = `${XIVAPI}/api/search?sheets=Item&fields=Name,ItemSearchCategory.ID&query=${encoded}&limit=15`;
+    const q_chs = tw2chs(q);
+    const url = `${CAFE}/search?string=${encodeURIComponent(q_chs)}&indexes=Item&limit=15`;
     const res = await fetch(url);
     const data = await res.json();
-    const results = data.results || [];
-
-    if (results.length === 0) {
-      dd.innerHTML = '<div class="dd-item" style="color:var(--text2)">找不到道具，試試英文或日文名稱</div>';
-      return;
-    }
-
-    dd.innerHTML = results.map(r => {
-      const id = String(r.row_id);
-      const name = r.fields?.Name || '';
-      return `<div class="dd-item" onmousedown="addItem(event,'${id}','${esc(name)}','')">
-        <div>${esc(name)}</div>
-      </div>`;
-    }).join('');
+    cafeResults = data.Results || [];
   } catch (e) {
-    dd.innerHTML = '<div class="dd-item" style="color:#a32d2d">搜尋失敗，請稍後再試</div>';
+    // 搜尋失敗時繼續，只用自訂清單
   }
+
+  // 3. 合併：自訂清單優先，再附上 CaféMaker 結果（排除已在自訂清單的 id）
+  const customIds = new Set(customHits.map(it => String(it.id)));
+  const merged = [
+    ...customHits.map(it => ({ id: String(it.id), name: it.name_tw, tag: '自訂' })),
+    ...cafeResults
+      .filter(r => !customIds.has(String(r.ID)))
+      .map(r => ({ id: String(r.ID), name: r.Name, tag: '' }))
+  ];
+
+  if (merged.length === 0) {
+    dd.innerHTML = '<div class="dd-item" style="color:var(--text2)">找不到道具，可試試簡體或英文名稱</div>';
+    return;
+  }
+
+  const addFn = isCustomTab ? 'addCustomItem' : 'addItem';
+  dd.innerHTML = merged.map(item => `
+    <div class="dd-item" onmousedown="${addFn}(event,'${esc(item.id)}','${esc(item.name)}')">
+      <span>${esc(item.name)}</span>
+      ${item.tag ? `<span class="dd-sub">${esc(item.tag)}</span>` : ''}
+      <span class="dd-sub" style="float:right;opacity:0.5">#${esc(item.id)}</span>
+    </div>
+  `).join('');
 }
 
 function hideDD() {
@@ -710,14 +884,14 @@ function hideDD() {
 
 // ─── Items ───────────────────────────────────────────────────────────────────
 
-function addItem(e, id, name, nameEn) {
+function addItem(e, id, name) {
   e.preventDefault();
   const r = state.retainers[state.activeTab];
   if (r.items.find(it => it.id === id)) {
     alert('此道具已在清單中');
     return;
   }
-  r.items.push({ id, name, nameEn });
+  r.items.push({ id, name });
   save();
   const inp = document.getElementById('searchInput');
   if (inp) inp.value = '';
@@ -798,6 +972,7 @@ function esc(str) {
 
 // ─── Init ────────────────────────────────────────────────────────────────────
 
+loadCustomItems();
 render();
 const allItems = state.retainers.flatMap(r => r.items);
 if (allItems.length > 0) fetchMarket(allItems);
