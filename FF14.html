@@ -1,0 +1,359 @@
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/LivlyShop/favicon.ico">
+  <link rel="stylesheet" href="ffstyle.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.42.0/dist/tabler-icons.min.css">
+  <title>FF14</title>
+</head>
+
+<body>
+<div class="app">
+  <div class="header">
+    <div>
+      <div class="title"><i class="ti ti-building-store" aria-hidden="true" style="margin-right:8px"></i>FF14 僱員市場分析</div>
+      <div class="subtitle">巴哈姆特伺服器 · 資料來源：Universalis</div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span class="refresh-count" id="lastRefresh"></span>
+      <button class="btn btn-primary" onclick="refreshAll()"><i class="ti ti-refresh" aria-hidden="true"></i>重新整理全部</button>
+    </div>
+  </div>
+
+  <div class="tabs" id="tabBar"></div>
+
+  <div id="tabContent"></div>
+</div>
+
+<div class="modal-overlay" id="renameModal">
+  <div class="modal">
+    <h3>更改僱員名稱</h3>
+    <input type="text" id="renameInput" placeholder="輸入新名稱…" maxlength="20">
+    <div class="modal-actions">
+      <button class="btn" onclick="closeRename()">取消</button>
+      <button class="btn btn-primary" onclick="confirmRename()">確認</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SERVER = 'Bahamut';
+const XIVAPI = 'https://xivapi.com';
+const UNI = 'https://universalis.app/api/v2';
+
+let state = JSON.parse(localStorage.getItem('ff14retainer') || 'null') || {
+  retainers: [
+    {name:'僱員一', items:[]},
+    {name:'僱員二', items:[]},
+    {name:'僱員三', items:[]}
+  ],
+  activeTab: 0
+};
+
+let marketCache = {};
+let currentSort = [{key:'price',dir:'asc'},{key:'vol',dir:'desc'}];
+let activeSort = 'price';
+let searchTimeout = null;
+let renamingTab = null;
+
+function save() {
+  localStorage.setItem('ff14retainer', JSON.stringify(state));
+}
+
+function render() {
+  renderTabs();
+  renderContent();
+}
+
+function renderTabs() {
+  const bar = document.getElementById('tabBar');
+  bar.innerHTML = state.retainers.map((r,i) => `
+    <button class="tab ${i===state.activeTab?'active':''}" onclick="switchTab(${i})">
+      ${esc(r.name)}
+      <span class="tab-rename ti ti-edit" onclick="event.stopPropagation();openRename(${i})" title="重新命名" aria-label="重新命名僱員${i+1}" style="font-size:12px;margin-left:4px;opacity:0.5"></span>
+    </button>
+  `).join('');
+}
+
+function switchTab(i) {
+  state.activeTab = i;
+  save();
+  render();
+}
+
+function openRename(i) {
+  renamingTab = i;
+  document.getElementById('renameInput').value = state.retainers[i].name;
+  document.getElementById('renameModal').classList.add('show');
+  setTimeout(()=>document.getElementById('renameInput').focus(),50);
+}
+
+function closeRename() {
+  document.getElementById('renameModal').classList.remove('show');
+  renamingTab = null;
+}
+
+function confirmRename() {
+  const val = document.getElementById('renameInput').value.trim();
+  if(val && renamingTab !== null) {
+    state.retainers[renamingTab].name = val;
+    save();
+    render();
+  }
+  closeRename();
+}
+
+document.getElementById('renameInput').addEventListener('keydown', e => {
+  if(e.key==='Enter') confirmRename();
+  if(e.key==='Escape') closeRename();
+});
+
+function renderContent() {
+  const r = state.retainers[state.activeTab];
+  const items = getSortedItems(state.activeTab);
+  const hasItems = r.items.length > 0;
+
+  document.getElementById('tabContent').innerHTML = `
+    <div class="add-item-row">
+      <input type="text" id="searchInput" placeholder="輸入道具名稱搜尋（繁中、日文或英文）…" autocomplete="off" oninput="onSearch(this.value)" onblur="hideDropdown()">
+      <div class="dropdown" id="searchDropdown"></div>
+    </div>
+
+    <div class="sort-row">
+      <span>排序：</span>
+      <button class="sort-btn ${activeSort==='price'?'active':''}" onclick="setSort('price')">
+        <i class="ti ti-coin" aria-hidden="true"></i>最低單價 ${activeSort==='price'?(currentSort.find(s=>s.key==='price').dir==='asc'?'↑':'↓'):''}
+      </button>
+      <button class="sort-btn ${activeSort==='vol'?'active':''}" onclick="setSort('vol')">
+        <i class="ti ti-trending-up" aria-hidden="true"></i>成交量 ${activeSort==='vol'?(currentSort.find(s=>s.key==='vol').dir==='asc'?'↑':'↓'):''}
+      </button>
+    </div>
+
+    ${hasItems ? `
+    <div class="status-bar">
+      <span class="status-dot ${getStatusClass(state.activeTab)}" id="statusDot"></span>
+      <span id="statusText">${getStatusText(state.activeTab)}</span>
+    </div>
+    <table class="item-table">
+      <thead><tr>
+        <th>道具名稱</th>
+        <th class="num">最低單價</th>
+        <th class="num">近期成交量</th>
+        <th></th>
+      </tr></thead>
+      <tbody>
+        ${items.map(item => renderRow(item)).join('')}
+      </tbody>
+    </table>
+    ` : `
+    <div class="empty-state">
+      <i class="ti ti-package" aria-hidden="true"></i>
+      <p>此僱員尚無道具，請搜尋並新增道具</p>
+    </div>
+    `}
+  `;
+}
+
+function getStatusClass(tabIdx) {
+  const r = state.retainers[tabIdx];
+  if(r.items.length === 0) return '';
+  const loaded = r.items.filter(it => marketCache[it.id]);
+  if(loaded.length === 0) return 'loading';
+  if(loaded.length < r.items.length) return 'loading';
+  return '';
+}
+
+function getStatusText(tabIdx) {
+  const r = state.retainers[tabIdx];
+  const total = r.items.length;
+  const loaded = r.items.filter(it => marketCache[it.id] && marketCache[it.id] !== 'loading').length;
+  if(loaded === 0 && total > 0) return '載入市場資料中…';
+  if(loaded < total) return `已載入 ${loaded}/${total} 筆市場資料`;
+  return `已載入全部 ${total} 筆市場資料`;
+}
+
+function renderRow(item) {
+  const mkt = marketCache[item.id];
+  let priceCell = '<span style="color:var(--color-text-secondary);font-size:13px">載入中…</span>';
+  let volCell = '<span style="color:var(--color-text-secondary);font-size:13px">—</span>';
+
+  if(mkt && mkt !== 'loading') {
+    const price = mkt.minPrice;
+    const vol = mkt.recentVol;
+    priceCell = price ? `<span class="price-val">${price.toLocaleString()}</span> <span style="font-size:12px;color:var(--color-text-secondary)">gil</span>` : '<span style="color:var(--color-text-secondary);font-size:13px">無掛單</span>';
+    const volClass = vol >= 50 ? 'vol-high' : vol >= 10 ? 'vol-med' : 'vol-low';
+    volCell = vol !== null ? `<span class="vol-badge ${volClass}">${vol}/天</span>` : '<span style="color:var(--color-text-secondary);font-size:13px">—</span>';
+  }
+
+  return `<tr>
+    <td>
+      <div class="item-name">${esc(item.name)}</div>
+      ${item.nameEn ? `<div class="item-sub">${esc(item.nameEn)}</div>` : ''}
+    </td>
+    <td class="num">${priceCell}</td>
+    <td class="num">${volCell}</td>
+    <td style="text-align:right;width:40px">
+      <button class="del-btn" onclick="removeItem(${state.activeTab},'${item.id}')" title="從清單移除" aria-label="移除 ${esc(item.name)}">
+        <i class="ti ti-trash" aria-hidden="true"></i>
+      </button>
+    </td>
+  </tr>`;
+}
+
+function getSortedItems(tabIdx) {
+  const items = [...state.retainers[tabIdx].items];
+  const s = currentSort.find(x=>x.key===activeSort);
+  return items.sort((a,b) => {
+    const ma = marketCache[a.id];
+    const mb = marketCache[b.id];
+    if(s.key === 'price') {
+      const pa = (ma && ma !== 'loading') ? (ma.minPrice || Infinity) : Infinity;
+      const pb = (mb && mb !== 'loading') ? (mb.minPrice || Infinity) : Infinity;
+      return s.dir==='asc' ? pa-pb : pb-pa;
+    } else {
+      const va = (ma && ma !== 'loading') ? (ma.recentVol || 0) : 0;
+      const vb = (mb && mb !== 'loading') ? (mb.recentVol || 0) : 0;
+      return s.dir==='asc' ? va-vb : vb-va;
+    }
+  });
+}
+
+function setSort(key) {
+  if(activeSort === key) {
+    const s = currentSort.find(x=>x.key===key);
+    s.dir = s.dir==='asc'?'desc':'asc';
+  } else {
+    activeSort = key;
+  }
+  render();
+}
+
+function onSearch(val) {
+  clearTimeout(searchTimeout);
+  if(val.length < 1) { hideDropdown(); return; }
+  searchTimeout = setTimeout(() => doSearch(val), 400);
+}
+
+async function doSearch(q) {
+  const dd = document.getElementById('searchDropdown');
+  dd.innerHTML = '<div class="dropdown-item" style="color:var(--color-text-secondary)">搜尋中…</div>';
+  dd.classList.add('show');
+  try {
+    const url = `${XIVAPI}/search?string=${encodeURIComponent(q)}&indexes=Item&filters=ItemSearchCategory.ID>=1&language=en&string_algo=wildcard&limit=12`;
+    const res = await fetch(url);
+    const data = await res.json();
+    const results = data.Results || [];
+    if(results.length === 0) {
+      dd.innerHTML = '<div class="dropdown-item" style="color:var(--color-text-secondary)">找不到道具</div>';
+      return;
+    }
+    dd.innerHTML = results.map(item => `
+      <div class="dropdown-item" onmousedown="addItem(event,'${item.ID}','${esc(item.Name_ja||item.Name)}','${esc(item.Name)}')">
+        <div>${esc(item.Name_ja || item.Name)}</div>
+        <div class="item-en">${esc(item.Name)}</div>
+      </div>
+    `).join('');
+  } catch(e) {
+    dd.innerHTML = '<div class="dropdown-item" style="color:var(--color-text-danger)">搜尋失敗，請稍後再試</div>';
+  }
+}
+
+function hideDropdown() {
+  setTimeout(()=>{
+    const dd = document.getElementById('searchDropdown');
+    if(dd) dd.classList.remove('show');
+  }, 150);
+}
+
+function addItem(e, id, name, nameEn) {
+  e.preventDefault();
+  const r = state.retainers[state.activeTab];
+  if(r.items.find(it=>it.id===id)) {
+    alert('此道具已在清單中');
+    return;
+  }
+  r.items.push({id, name, nameEn: nameEn !== name ? nameEn : ''});
+  save();
+  const inp = document.getElementById('searchInput');
+  if(inp) inp.value = '';
+  hideDropdown();
+  fetchMarket([{id}]);
+  render();
+}
+
+function removeItem(tabIdx, id) {
+  state.retainers[tabIdx].items = state.retainers[tabIdx].items.filter(it=>it.id!==id);
+  delete marketCache[id];
+  save();
+  render();
+}
+
+async function fetchMarket(items) {
+  const ids = items.map(it=>it.id).filter(id=>!marketCache[id]||marketCache[id]==='error');
+  if(ids.length===0) return;
+  ids.forEach(id=>marketCache[id]='loading');
+  render();
+
+  for(let i=0;i<ids.length;i+=15) {
+    const chunk = ids.slice(i,i+15);
+    try {
+      const url = `${UNI}/${SERVER}/${chunk.join(',')}?fields=listings,recentHistory&entriesWithin=604800`;
+      const res = await fetch(url);
+      const data = await res.json();
+
+      const process = (itemId, d) => {
+        if(!d) { marketCache[itemId]='error'; return; }
+        const listings = d.listings || [];
+        const minPrice = listings.length > 0 ? Math.min(...listings.map(l=>l.pricePerUnit)) : null;
+        const history = d.recentHistory || [];
+        const now = Date.now()/1000;
+        const weekAgo = now - 7*86400;
+        const recent = history.filter(h=>h.timestamp>=weekAgo);
+        const recentVol = recent.length > 0 ? Math.round(recent.reduce((s,h)=>s+h.quantity,0)/7) : 0;
+        marketCache[itemId] = {minPrice, recentVol};
+      };
+
+      if(chunk.length===1) {
+        process(chunk[0], data);
+      } else {
+        const items_data = data.items || {};
+        chunk.forEach(id => process(id, items_data[id]));
+      }
+    } catch(e) {
+      chunk.forEach(id=>marketCache[id]='error');
+    }
+    render();
+  }
+}
+
+async function refreshAll() {
+  state.retainers.forEach(r => r.items.forEach(it => delete marketCache[it.id]));
+  const allItems = state.retainers.flatMap(r=>r.items);
+  document.getElementById('lastRefresh').textContent = '';
+  render();
+  await fetchMarket(allItems);
+  const now = new Date();
+  document.getElementById('lastRefresh').textContent = `上次更新 ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}`;
+}
+
+function esc(str) {
+  if(!str) return '';
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+}
+
+document.getElementById('renameModal').addEventListener('click', e => {
+  if(e.target === document.getElementById('renameModal')) closeRename();
+});
+
+render();
+
+const allItems = state.retainers.flatMap(r=>r.items);
+if(allItems.length > 0) fetchMarket(allItems);
+</script>
+</body>
+</html>
