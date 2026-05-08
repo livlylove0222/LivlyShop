@@ -344,6 +344,7 @@ function render() {
         <span>排序：</span>
         <button class="sort-btn ${activeSort === 'price' ? 'active' : ''}" onclick="toggleSort('price')">最低單價 ${getSortIcon('price')}</button>
         <button class="sort-btn ${activeSort === 'vol' ? 'active' : ''}" onclick="toggleSort('vol')">成交量 ${getSortIcon('vol')}</button>
+        <button class="sort-btn ${activeSort === 'none' ? 'active' : ''}" onclick="resetSort()">取消排序</button>
       </div>
 
       <table class="item-table">
@@ -435,20 +436,29 @@ function getSortIcon(type) {
 }
 
 function getSortedItems(items) {
+  // 如果是 none，直接回傳原始陣列（最晚新增的會在最上面）
   if (activeSort === 'none') return items;
   
   return [...items].sort((a, b) => {
-    const ma = marketCache[a.id] || { price: 0, vol: 0 };
-    const mb = marketCache[b.id] || { price: 0, vol: 0 };
-    const valA = activeSort === 'price' ? (ma.price || 0) : (ma.vol || 0);
-    const valB = activeSort === 'price' ? (mb.price || 0) : (mb.vol || 0);
+    const ma = marketCache[a.id];
+    const mb = marketCache[b.id];
+    
+    // 處理 Loading 或資料缺失的情況，給予預設值以便排序
+    const valA = (ma && ma !== 'loading') ? (activeSort === 'price' ? ma.price : ma.vol) : (activeSort === 'price' ? Infinity : -1);
+    const valB = (mb && mb !== 'loading') ? (activeSort === 'price' ? mb.price : mb.vol) : (activeSort === 'price' ? Infinity : -1);
+    
     return (valA - valB) * sortDir;
   });
 }
 
+function resetSort() {
+  activeSort = 'none';
+  render(); // 僅重新渲染畫面
+}
+
 function switchTab(i) {
   state.activeTab = i;
-  activeSort = 'none'; // 切換分頁重置排序，恢復「晚新增在上面」
+  activeSort = 'none'; // 切換分頁自動回到預設排序
   save();
   render();
 }
