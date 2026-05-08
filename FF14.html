@@ -3,449 +3,54 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" href="/LivlyShop/favicon.ico">
+<link rel="icon" href="/LivlyShop/favicon.ico">
 <title>FF14 僱員市場分析 · 巴哈姆特</title>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
   :root {
-    --bg: #ffffff;
-    --bg2: #f5f5f4;
-    --bg3: #eeece9;
-    --text: #1c1c1a;
-    --text2: #6b6b67;
-    --text3: #a09f9b;
-    --border: rgba(0,0,0,0.12);
-    --border2: rgba(0,0,0,0.22);
-    --radius: 8px;
-    --radius-lg: 12px;
-    --danger-bg: #fcebeb;
-    --danger-text: #a32d2d;
+    --bg: #ffffff; --bg2: #f5f5f4; --bg3: #eeece9;
+    --text: #1c1c1a; --text2: #6b6b67; --text3: #a09f9b;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --radius: 8px; --radius-lg: 12px;
+    --danger-bg: #fcebeb; --danger-text: #a32d2d;
   }
-
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #1e1e1c;
-      --bg2: #272724;
-      --bg3: #303030;
-      --text: #e8e6e1;
-      --text2: #9a9890;
-      --text3: #5e5d58;
-      --border: rgba(255,255,255,0.1);
-      --border2: rgba(255,255,255,0.2);
-      --danger-bg: #3a1414;
-      --danger-text: #f09595;
+      --bg: #1e1e1c; --bg2: #272724; --bg3: #303030;
+      --text: #e8e6e1; --text2: #9a9890; --text3: #5e5d58;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --danger-bg: #3a1414; --danger-text: #f09595;
     }
   }
-
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-    background: var(--bg3);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 24px 16px;
-  }
-
-  .app {
-    max-width: 780px;
-    margin: 0 auto;
-  }
-
-  /* Header */
-  .header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
-
-  .title {
-    font-size: 20px;
-    font-weight: 600;
-    color: var(--text);
-    letter-spacing: -0.3px;
-  }
-
-  .subtitle {
-    font-size: 13px;
-    color: var(--text2);
-    margin-top: 3px;
-  }
-
-  /* Buttons */
-  .btn {
-    background: var(--bg);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius);
-    padding: 7px 14px;
-    font-size: 13px;
-    cursor: pointer;
-    color: var(--text);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    transition: background 0.12s, opacity 0.12s;
-    font-family: inherit;
-  }
-
-  .btn:hover { background: var(--bg2); }
-  .btn:active { transform: scale(0.98); }
-
-  .btn-primary {
-    background: var(--text);
-    color: var(--bg);
-    border-color: var(--text);
-  }
-
-  .btn-primary:hover { opacity: 0.82; background: var(--text); }
-
-  .btn-sm {
-    padding: 4px 10px;
-    font-size: 12px;
-  }
-
-  /* Tabs */
-  .tabs {
-    display: flex;
-    gap: 0;
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 20px;
-  }
-
-  .tab {
-    padding: 9px 18px;
-    font-size: 14px;
-    cursor: pointer;
-    color: var(--text2);
-    border: none;
-    background: none;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -1px;
-    transition: color 0.12s;
-    font-family: inherit;
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-  }
-
-  .tab.active {
-    color: var(--text);
-    border-bottom-color: var(--text);
-    font-weight: 500;
-  }
-
-  .tab:hover:not(.active) { color: var(--text); }
-
-  .tab-edit-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text2);
-    font-size: 13px;
-    padding: 2px;
-    line-height: 1;
-    border-radius: 4px;
-    transition: opacity 0.12s, background 0.12s;
-    font-family: inherit;
-  }
-
-  .tab:hover .tab-edit-btn,
-  .tab.active .tab-edit-btn { opacity: 1; }
-
-  .tab-edit-btn:hover { background: var(--bg2); color: var(--text); }
-
-  /* Panel */
-  .panel {
-    background: var(--bg);
-    border: 0.5px solid var(--border);
-    border-radius: var(--radius-lg);
-    padding: 20px;
-  }
-
-  /* Search row */
-  .search-row {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 14px;
-    position: relative;
-  }
-
-  .search-row input {
-    flex: 1;
-    padding: 9px 13px;
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius);
-    background: var(--bg2);
-    color: var(--text);
-    font-size: 14px;
-    font-family: inherit;
-    outline: none;
-    transition: border-color 0.12s;
-  }
-
-  .search-row input:focus { border-color: var(--text2); background: var(--bg); }
-  .search-row input::placeholder { color: var(--text3); }
-
-  /* Dropdown */
-  .dropdown {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0;
-    right: 0;
-    background: var(--bg);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius);
-    z-index: 100;
-    max-height: 230px;
-    overflow-y: auto;
-    display: none;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.08);
-  }
-
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background: var(--bg3); color: var(--text); min-height: 100vh; padding: 24px 16px; }
+  .app { max-width: 780px; margin: 0 auto; }
+  .header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 20px; gap: 12px; }
+  .title { font-size: 20px; font-weight: 600; }
+  .subtitle { font-size: 13px; color: var(--text2); margin-top: 3px; }
+  .btn { background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 7px 14px; font-size: 13px; cursor: pointer; color: var(--text); display: inline-flex; align-items: center; gap: 6px; }
+  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+  .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+  .tab { padding: 9px 18px; font-size: 14px; cursor: pointer; color: var(--text2); border: none; background: none; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+  .panel { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+  .search-row { display: flex; gap: 8px; margin-bottom: 14px; position: relative; }
+  .search-row input { flex: 1; padding: 9px 13px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); outline: none; }
+  .dropdown { position: absolute; top: calc(100% + 4px); left: 0; right: 0; background: var(--bg); border: 0.5px solid var(--border2); border-radius: var(--radius); z-index: 100; max-height: 230px; overflow-y: auto; display: none; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
   .dropdown.show { display: block; }
-
-  .dd-item {
-    padding: 9px 13px;
-    font-size: 14px;
-    cursor: pointer;
-    color: var(--text);
-    border-bottom: 0.5px solid var(--border);
-    transition: background 0.1s;
-  }
-
-  .dd-item:last-child { border-bottom: none; }
+  .dd-item { padding: 9px 13px; font-size: 14px; cursor: pointer; border-bottom: 0.5px solid var(--border); }
   .dd-item:hover { background: var(--bg2); }
-
-  .dd-item .dd-sub {
-    font-size: 12px;
-    color: var(--text2);
-    margin-top: 2px;
-  }
-
-  /* Sort bar */
-  .sort-bar {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    margin-bottom: 14px;
-    flex-wrap: wrap;
-  }
-
-  .sort-bar span {
-    font-size: 13px;
-    color: var(--text2);
-  }
-
-  .sort-btn {
-    padding: 5px 12px;
-    font-size: 12px;
-    border-radius: 20px;
-    border: 0.5px solid var(--border);
-    background: transparent;
-    cursor: pointer;
-    color: var(--text2);
-    font-family: inherit;
-    transition: all 0.12s;
-  }
-
-  .sort-btn.active {
-    background: var(--bg2);
-    color: var(--text);
-    border-color: var(--border2);
-  }
-
-  .sort-btn:hover { color: var(--text); border-color: var(--border2); }
-
-  /* Status bar */
-  .status-bar {
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    font-size: 12px;
-    color: var(--text2);
-    margin-bottom: 12px;
-  }
-
-  .dot {
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #9FE1CB;
-    flex-shrink: 0;
-  }
-
-  .dot.loading {
-    background: #FAC775;
-    animation: pulse 1s infinite;
-  }
-
-  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.35} }
-
-  /* Table */
-  .item-table {
-    width: 100%;
-    border-collapse: collapse;
-    table-layout: fixed;
-  }
-
-  .item-table th {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--text2);
-    text-align: left;
-    padding: 6px 10px;
-    border-bottom: 0.5px solid var(--border);
-  }
-
-  .item-table th.r { text-align: right; }
-  .item-table th:first-child { width: 35%; }
-  .item-table th:nth-child(2) { width: 12%; }
-  .item-table th:nth-child(3) { width: 22%; }
-  .item-table th:nth-child(4) { width: 22%; }
-  .item-table th:last-child { width: 9%; }
-  .item-id { font-size: 12px; color: var(--text3); font-variant-numeric: tabular-nums; }
-
-  .item-table td {
-    padding: 10px 10px;
-    font-size: 14px;
-    border-bottom: 0.5px solid var(--border);
-    color: var(--text);
-    vertical-align: middle;
-  }
-
-  .item-table td.r { text-align: right; }
-  .item-table tr:last-child td { border-bottom: none; }
-  .item-table tbody tr:hover td { background: var(--bg2); }
-
-  .item-name { font-weight: 500; }
-  .item-sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
-
-  .price-val { font-variant-numeric: tabular-nums; }
-  .price-unit { font-size: 12px; color: var(--text2); margin-left: 3px; }
-
-  .vol-badge {
-    display: inline-block;
-    padding: 2px 9px;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 500;
-  }
-
+  .dd-sub { font-size: 12px; color: var(--text2); }
+  .item-table { width: 100%; border-collapse: collapse; }
+  .item-table th, .item-table td { padding: 10px; font-size: 14px; border-bottom: 0.5px solid var(--border); text-align: left; }
+  .r { text-align: right !important; }
+  .vol-badge { padding: 2px 9px; border-radius: 20px; font-size: 12px; }
   .vol-high { background: #EAF3DE; color: #3B6D11; }
-  .vol-med  { background: #FAEEDA; color: #854F0B; }
-  .vol-low  { background: #f1f0ec; color: #5F5E5A; }
-
-  @media (prefers-color-scheme: dark) {
-    .vol-high { background: #1a2e0a; color: #97C459; }
-    .vol-med  { background: #2c1f06; color: #EF9F27; }
-    .vol-low  { background: #2c2c2a; color: #888780; }
-  }
-
-  .muted { color: var(--text3); font-size: 13px; }
-
-  /* Del button */
-  .del-btn {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text3);
-    padding: 4px 6px;
-    border-radius: var(--radius);
-    font-size: 15px;
-    line-height: 1;
-    transition: color 0.1s, background 0.1s;
-    font-family: inherit;
-  }
-
-  .del-btn:hover { color: var(--danger-text); background: var(--danger-bg); }
-
-  /* inline edit for custom tab */
-  .inline-edit {
-    width: 100%;
-    padding: 4px 7px;
-    border: 0.5px solid transparent;
-    border-radius: var(--radius);
-    background: transparent;
-    color: var(--text);
-    font-size: 14px;
-    font-family: inherit;
-    font-weight: 500;
-    outline: none;
-    transition: border-color 0.12s, background 0.12s;
-  }
-  .inline-edit:hover { border-color: var(--border); background: var(--bg2); }
+  .vol-low { background: #f1f0ec; color: #5F5E5A; }
+  .inline-edit { width: 100%; padding: 4px; border: 1px solid transparent; background: transparent; color: inherit; }
   .inline-edit:focus { border-color: var(--border2); background: var(--bg); }
-
-  /* Empty state */
-  .empty {
-    text-align: center;
-    padding: 48px 20px;
-    color: var(--text2);
-  }
-
-  .empty-icon { font-size: 32px; margin-bottom: 12px; opacity: 0.35; }
-  .empty p { font-size: 14px; }
-
-  /* Refresh info */
-  .refresh-info {
-    font-size: 12px;
-    color: var(--text3);
-  }
-
-  /* Modal */
-  .modal-backdrop {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.35);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    z-index: 200;
-    display: none;
-  }
-
+  .modal-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: none; align-items: center; justify-content: center; z-index: 200; }
   .modal-backdrop.show { display: flex; }
-
-  .modal {
-    background: var(--bg);
-    border-radius: var(--radius-lg);
-    border: 0.5px solid var(--border2);
-    padding: 24px;
-    width: 320px;
-    max-width: 90vw;
-  }
-
-  .modal h3 { font-size: 16px; font-weight: 500; margin-bottom: 14px; }
-
-  .modal input {
-    width: 100%;
-    padding: 9px 12px;
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius);
-    background: var(--bg2);
-    color: var(--text);
-    font-size: 14px;
-    font-family: inherit;
-    outline: none;
-    margin-bottom: 14px;
-  }
-
-  .modal input:focus { border-color: var(--text2); }
-
-  .modal-actions {
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-  }
-
-  .header-right {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex-wrap: wrap;
-  }
+  .modal { background: var(--bg); padding: 24px; border-radius: var(--radius-lg); width: 320px; }
 </style>
 </head>
 <body>
@@ -454,11 +59,11 @@
   <div class="header">
     <div>
       <div class="title">⚔️ FF14 僱員市場分析</div>
-      <div class="subtitle">繁中版・巴哈姆特伺服器 · 資料來源：Universalis & CaféMaker</div>
+      <div class="subtitle">繁中版・巴哈姆特伺服器 · 資料來源：Universalis & Teamcraft</div>
     </div>
     <div class="header-right">
-      <span class="refresh-info" id="lastRefresh"></span>
-      <button class="btn btn-primary" onclick="refreshAll()">↻ 重新整理全部</button>
+      <span id="lastRefresh" style="font-size:12px; color:var(--text3); margin-right:10px;"></span>
+      <button class="btn btn-primary" onclick="refreshAll()">↻ 重新整理市場價</button>
     </div>
   </div>
 
@@ -469,8 +74,8 @@
 <div class="modal-backdrop" id="renameModal">
   <div class="modal">
     <h3>更改僱員名稱</h3>
-    <input type="text" id="renameInput" placeholder="輸入新名稱…" maxlength="20">
-    <div class="modal-actions">
+    <input type="text" id="renameInput" style="width:100%; margin: 10px 0; padding:8px;">
+    <div style="text-align:right;">
       <button class="btn" onclick="closeRename()">取消</button>
       <button class="btn btn-primary" onclick="confirmRename()">確認</button>
     </div>
@@ -478,61 +83,17 @@
 </div>
 
 <script>
-const SERVER = 4033; // 繁中版巴哈姆特（id:4033），非日服Gaia的Bahamut（id:69）
-const CAFE  = 'https://cafemaker.wakingsands.com';
-const UNI   = 'https://universalis.app/api/v2';
+const SERVER = 4033; 
+const UNI = 'https://universalis.app/api/v2';
+const PATH_TW = './FFXIV/tw-items.json';
+const PATH_INTL = './FFXIV/items.json';
 
-// ─── 繁→簡轉換表（常見差異字，不足時靠 custom_items.json 補充）────────────
-const TW2CHS_MAP = {
-  '紅':'红','藍':'蓝','綠':'绿','銀':'银','鐵':'铁','銅':'铜','鋼':'钢',
-  '劍':'剑','藥':'药','樹':'树','礦':'矿','魚':'鱼','獸':'兽','鳥':'鸟',
-  '蟲':'虫','龍':'龙','鳳':'凤','獅':'狮','傳':'传','術':'术','靈':'灵',
-  '聖':'圣','輕':'轻','強':'强','軟':'软','細':'细','舊':'旧','優':'优',
-  '貴':'贵','純':'纯','濃':'浓','飾':'饰','錦':'锦','絲':'丝','齒':'齿',
-  '翼':'翼','鱗':'鳞','殼':'壳','膽':'胆','漿':'浆','蠟':'蜡','膠':'胶',
-  '鹽':'盐','醬':'酱','湯':'汤','麵':'面','麥':'麦','種':'种','實':'实',
-  '葉':'叶','莖':'茎','蓮':'莲','蘭':'兰','蓟':'蓟','鹹':'咸','鮮':'鲜',
-  '澀':'涩','韌':'韧','濁':'浊','渾':'浑','燦':'灿','閃':'闪','輝':'辉',
-  '紋':'纹','帶':'带','條':'条','塊':'块','錠':'锭','籃':'篮','爐':'炉',
-  '鍋':'锅','盤':'盘','壺':'壶','錘':'锤','鋸':'锯','鑿':'凿','鑽':'钻',
-  '針':'针','鉤':'钩','繩':'绳','鏈':'链','鎖':'锁','鍵':'键','鐲':'镯',
-  '鍊':'链','冠':'冠','褲':'裤','靴':'靴','槍':'枪','書':'书','圖':'图',
-  '冊':'册','紙':'纸','筆':'笔','燈':'灯','鏡':'镜','畫':'画','寶':'宝',
-  '遺':'遗','廢':'废','損':'损','殘':'残','珀':'珀','瑪':'玛','璃':'璃',
-  '琉':'琉','瓏':'珑','瑩':'莹','臺':'台','體':'体','會':'会','來':'来',
-  '國':'国','學':'学','說':'说','頭':'头','長':'长','開':'开','時':'时',
-  '問':'问','關':'关','現':'现','點':'点','這':'这','對':'对','動':'动',
-  '為':'为','樣':'样','進':'进','過':'过','後':'后','發':'发','還':'还',
-  '從':'从','給':'给','經':'经','個':'个','們':'们','邊':'边','裡':'里',
-  '見':'见','買':'买','賣':'卖','線':'线','網':'网','號':'号','讓':'让',
-  '間':'间','變':'变','薑':'姜','蔥':'葱',
-};
+let db_tw = {};
+let db_intl = {};
+let marketCache = JSON.parse(localStorage.getItem('ff14_market_cache') || '{}');
+let customTranslations = JSON.parse(localStorage.getItem('ff14_custom_trans') || '{}');
 
-function tw2chs(str) {
-  return str.split('').map(c => TW2CHS_MAP[c] || c).join('');
-}
-
-// ─── 簡→繁轉換表（與 TW2CHS_MAP 互為對照，用於自動填入繁中欄位）──────────
-const CHS2TW_MAP = {};
-Object.entries(TW2CHS_MAP).forEach(([tw, chs]) => {
-  // 若簡體字尚未被登記（避免多對一覆蓋），才加入
-  if (!CHS2TW_MAP[chs]) CHS2TW_MAP[chs] = tw;
-});
-
-function chs2tw(str) {
-  return str.split('').map(c => CHS2TW_MAP[c] || c).join('');
-}
-
-// ─── 自訂道具清單（localStorage）────────────────────────────────────────────
-function loadCustomItems() {
-  customItems = JSON.parse(localStorage.getItem('ff14_custom_items') || '[]');
-}
-
-function saveCustomItems() {
-  localStorage.setItem('ff14_custom_items', JSON.stringify(customItems));
-}
-
-let state = JSON.parse(localStorage.getItem('ff14retainer_v2') || 'null') || {
+let state = JSON.parse(localStorage.getItem('ff14retainer_v3') || 'null') || {
   retainers: [
     { name: '僱員一', items: [] },
     { name: '僱員二', items: [] },
@@ -541,19 +102,92 @@ let state = JSON.parse(localStorage.getItem('ff14retainer_v2') || 'null') || {
   activeTab: 0
 };
 
-let customItems = [];
-let marketCache = {};
-let activeSort = 'price';
-let sortDir = { price: 'asc', vol: 'desc' };
-let searchTimer = null;
-let renamingIdx = null;
-
-function save() {
-  localStorage.setItem('ff14retainer_v2', JSON.stringify(state));
+// ─── 初始化：載入 JSON 資料庫 ──────────────────────────────────────────
+async function initDB() {
+  try {
+    const [resTw, resIntl] = await Promise.all([
+      fetch(PATH_TW).then(r => r.json()),
+      fetch(PATH_INTL).then(r => r.json())
+    ]);
+    db_tw = resTw;
+    db_intl = resIntl;
+    console.log("資料庫載入成功");
+    render();
+    refreshMarketDisplay();
+  } catch (e) {
+    alert("無法讀取 JSON 檔案，請確認路徑或是否在伺服器環境執行。");
+  }
 }
 
-// ─── Render ──────────────────────────────────────────────────────────────────
+function save() {
+  localStorage.setItem('ff14retainer_v3', JSON.stringify(state));
+  localStorage.setItem('ff14_custom_trans', JSON.stringify(customTranslations));
+  localStorage.setItem('ff14_market_cache', JSON.stringify(marketCache));
+}
 
+// ─── 搜尋邏輯：支援多語言備援 ──────────────────────────────────────────
+async function doSearch(q, isCustomTab = false) {
+  const dd = document.getElementById('dd');
+  if (!q.trim()) { dd.classList.remove('show'); return; }
+  
+  dd.innerHTML = '<div class="dd-item">搜尋中…</div>';
+  dd.classList.add('show');
+
+  const results = [];
+  const query = q.toLowerCase();
+
+  // 1. 優先搜繁中 (tw-items.json)
+  for (const [id, data] of Object.entries(db_tw)) {
+    if (data.tw && data.tw.toLowerCase().includes(query)) {
+      results.push({ id, name: data.tw, lang: 'TW' });
+    }
+  }
+
+  // 2. 如果結果不多，搜國際版 (items.json)
+  if (results.length < 10) {
+    for (const [id, data] of Object.entries(db_intl)) {
+      if (results.some(r => r.id === id)) continue; // 跳過已找到的
+      const match = ['en', 'ja', 'de', 'fr'].find(l => data[l] && data[l].toLowerCase().includes(query));
+      if (match) {
+        results.push({ id, name: data[match], lang: match.toUpperCase() });
+      }
+    }
+  }
+
+  if (results.length === 0) {
+    dd.innerHTML = '<div class="dd-item">找不到道具</div>';
+    return;
+  }
+
+  const addFn = isCustomTab ? 'addCustomItem' : 'addItem';
+  dd.innerHTML = results.slice(0, 15).map(item => `
+    <div class="dd-item" onmousedown="${addFn}(event,'${item.id}','${item.name}', '${item.lang}')">
+      <span>${item.name}</span>
+      <span class="dd-sub" style="float:right">#${item.id} (${item.lang})</span>
+    </div>
+  `).join('');
+}
+
+// ─── 核心功能：新增道具與自動翻譯註冊 ───────────────────────────────────
+function addItem(e, id, originalName, lang) {
+  e.preventDefault();
+  const r = state.retainers[state.activeTab];
+  if (r.items.find(it => it.id === id)) return;
+
+  r.items.push({ id, name: originalName });
+
+  // 如果這不是繁中資料庫的內容，自動加入自訂翻譯
+  if (lang !== 'TW' && !customTranslations[id]) {
+    customTranslations[id] = originalName; // 先填入原文，讓使用者去自訂分頁改
+  }
+
+  save();
+  document.getElementById('searchInput').value = '';
+  fetchMarket([id]);
+  render();
+}
+
+// ─── UI 渲染 ───────────────────────────────────────────────────────────
 function render() {
   renderTabs();
   renderContent();
@@ -562,425 +196,102 @@ function render() {
 function renderTabs() {
   const retainerTabs = state.retainers.map((r, i) => `
     <button class="tab ${state.activeTab === i ? 'active' : ''}" onclick="switchTab(${i})">
-      ${esc(r.name)}
-      <button class="tab-edit-btn" onclick="event.stopPropagation(); openRename(${i})" title="重新命名" aria-label="重新命名">✎</button>
+      ${r.name} <span onclick="event.stopPropagation(); openRename(${i})">✎</span>
     </button>
   `).join('');
-  const customTab = `
-    <button class="tab ${state.activeTab === 'custom' ? 'active' : ''}" onclick="switchTab('custom')" style="margin-left:auto">
-      ✦ 自訂道具
-    </button>`;
+  const customTab = `<button class="tab ${state.activeTab === 'custom' ? 'active' : ''}" onclick="switchTab('custom')" style="margin-left:auto">✦ 自訂翻譯</button>`;
   document.getElementById('tabBar').innerHTML = retainerTabs + customTab;
 }
 
 function renderContent() {
   if (state.activeTab === 'custom') { renderCustomTab(); return; }
   const r = state.retainers[state.activeTab];
-  const sorted = getSorted(state.activeTab);
-  const hasItems = r.items.length > 0;
-
-  const allLoaded = r.items.length > 0 && r.items.every(it => marketCache[it.id] && marketCache[it.id] !== 'loading');
-  const anyLoading = r.items.some(it => marketCache[it.id] === 'loading' || !marketCache[it.id]);
-
+  
   document.getElementById('tabContent').innerHTML = `
     <div class="panel">
       <div class="search-row">
-        <input type="text" id="searchInput"
-          placeholder="輸入道具名稱搜尋（繁中、日文或英文）…"
-          autocomplete="off"
-          oninput="onSearch(this.value)"
-          onblur="hideDD()">
+        <input type="text" id="searchInput" placeholder="輸入名稱搜尋（繁中、英、日）…" oninput="doSearch(this.value)" onblur="hideDD()">
         <div class="dropdown" id="dd"></div>
       </div>
-
-      <div class="sort-bar">
-        <span>排序：</span>
-        <button class="sort-btn ${activeSort === 'price' ? 'active' : ''}" onclick="setSort('price')">
-          最低單價 ${activeSort === 'price' ? (sortDir.price === 'asc' ? '↑' : '↓') : ''}
-        </button>
-        <button class="sort-btn ${activeSort === 'vol' ? 'active' : ''}" onclick="setSort('vol')">
-          成交量 ${activeSort === 'vol' ? (sortDir.vol === 'asc' ? '↑' : '↓') : ''}
-        </button>
-      </div>
-
-      ${hasItems ? `
-        <div class="status-bar">
-          <span class="dot ${anyLoading && !allLoaded ? 'loading' : ''}"></span>
-          <span>${getStatusText()}</span>
-        </div>
-        <table class="item-table">
-          <thead><tr>
-            <th>道具名稱</th>
-            <th>Item ID</th>
-            <th class="r">最低單價</th>
-            <th class="r">近期成交量</th>
-            <th></th>
-          </tr></thead>
-          <tbody>
-            ${sorted.map(item => renderRow(item)).join('')}
-          </tbody>
-        </table>
-      ` : `
-        <div class="empty">
-          <div class="empty-icon">📦</div>
-          <p>此僱員尚無道具，請搜尋並新增道具</p>
-        </div>
-      `}
-    </div>
-  `;
-}
-
-function getStatusText() {
-  const r = state.retainers[state.activeTab];
-  const total = r.items.length;
-  const done = r.items.filter(it => marketCache[it.id] && marketCache[it.id] !== 'loading').length;
-  if (done === 0) return '載入市場資料中…';
-  if (done < total) return `已載入 ${done}/${total} 筆`;
-  return `已載入全部 ${total} 筆市場資料`;
+      <table class="item-table">
+        <thead><tr><th>道具名稱</th><th>ID</th><th class="r">最低價</th><th class="r">7日銷量</th><th></th></tr></thead>
+        <tbody>${r.items.map(it => renderRow(it)).join('')}</tbody>
+      </table>
+    </div>`;
 }
 
 function renderRow(item) {
-  const mkt = marketCache[item.id];
-  let priceCell = '<span class="muted">載入中…</span>';
-  let volCell   = '<span class="muted">—</span>';
-
-  if (mkt && mkt !== 'loading') {
-    const p = mkt.minPrice;
-    priceCell = p != null
-      ? `<span class="price-val">${p.toLocaleString()}</span><span class="price-unit">gil</span>`
-      : '<span class="muted">無掛單</span>';
-
-    const v = mkt.recentVol;
-    if (v != null) {
-      const cls = v >= 50 ? 'vol-high' : v >= 10 ? 'vol-med' : 'vol-low';
-      volCell = `<span class="vol-badge ${cls}">${v}/7天</span>`;
-    }
-  }
-
+  // 名稱顯示邏輯：自訂翻譯 > 繁中庫 > 原始新增名稱
+  const displayName = customTranslations[item.id] || (db_tw[item.id] ? db_tw[item.id].tw : item.name);
+  const m = marketCache[item.id] || {};
+  
   return `<tr>
-    <td>
-      <div class="item-name">${esc(item.name)}</div>
-    </td>
-    <td><span class="item-id">${esc(item.id)}</span></td>
-    <td class="r">${priceCell}</td>
-    <td class="r">${volCell}</td>
-    <td style="text-align:right">
-      <button class="del-btn" onclick="removeItem(${state.activeTab},'${item.id}')" title="從清單移除">✕</button>
-    </td>
+    <td><div style="font-weight:500">${displayName}</div></td>
+    <td style="color:#a09f9b; font-size:12px">#${item.id}</td>
+    <td class="r">${m.price ? m.price.toLocaleString() + ' gil' : '---'}</td>
+    <td class="r"><span class="vol-badge ${m.vol > 20 ? 'vol-high' : 'vol-low'}">${m.vol || 0}</span></td>
+    <td class="r"><button class="btn" onclick="removeItem('${item.id}')">✕</button></td>
   </tr>`;
 }
 
-function getSorted(tabIdx) {
-  const items = [...state.retainers[tabIdx].items];
-  const dir = sortDir[activeSort] === 'asc' ? 1 : -1;
-  return items.sort((a, b) => {
-    const ma = marketCache[a.id];
-    const mb = marketCache[b.id];
-    if (activeSort === 'price') {
-      const pa = (ma && ma !== 'loading' && ma.minPrice != null) ? ma.minPrice : Infinity;
-      const pb = (mb && mb !== 'loading' && mb.minPrice != null) ? mb.minPrice : Infinity;
-      return (pa - pb) * dir;
-    } else {
-      const va = (ma && ma !== 'loading' && ma.recentVol != null) ? ma.recentVol : -1;
-      const vb = (mb && mb !== 'loading' && mb.recentVol != null) ? mb.recentVol : -1;
-      return (va - vb) * dir;
-    }
-  });
-}
-
-// ─── Tabs ────────────────────────────────────────────────────────────────────
-
-function switchTab(i) {
-  state.activeTab = i;
-  save();
-  render();
-}
-
-// ─── 自訂道具分頁 ─────────────────────────────────────────────────────────────
-
 function renderCustomTab() {
+  const ids = Object.keys(customTranslations);
   document.getElementById('tabContent').innerHTML = `
     <div class="panel">
-      <div class="search-row">
-        <input type="text" id="customSearchInput"
-          placeholder="搜尋道具新增至自訂清單（繁中、簡中或英文）…"
-          autocomplete="off"
-          oninput="onCustomSearch(this.value)"
-          onblur="hideDD()">
-        <div class="dropdown" id="dd"></div>
-      </div>
-      <p style="font-size:12px;color:var(--text2);margin-bottom:14px">
-        新增後可直接編輯繁中名稱欄位。搜尋時會優先使用繁中名稱顯示。
-      </p>
-      ${customItems.length > 0 ? `
+      <h3>自訂翻譯管理</h3>
+      <p style="font-size:12px; color:var(--text2); margin-bottom:15px;">搜尋國際版新增的道具會自動列在此處，點擊名稱可直接修改為繁體中文。</p>
       <table class="item-table">
-        <thead><tr>
-          <th style="width:35%">繁中名稱</th>
-          <th style="width:30%">簡中名稱</th>
-          <th style="width:20%">Item ID</th>
-          <th style="width:15%"></th>
-        </tr></thead>
-        <tbody>
-          ${customItems.map((it, idx) => `<tr>
-            <td>
-              <input class="inline-edit" value="${esc(it.name_tw)}"
-                onchange="updateCustomTw(${idx}, this.value)"
-                title="點擊編輯繁中名稱">
-            </td>
-            <td style="color:var(--text2);font-size:13px">${esc(it.name_chs)}</td>
-            <td><span class="item-id">${esc(String(it.id))}</span></td>
-            <td style="text-align:right">
-              <button class="del-btn" onclick="removeCustomItem(${idx})" title="從自訂清單移除">✕</button>
-            </td>
+        <thead><tr><th>ID</th><th>原文/顯示名稱 (點擊編輯)</th><th>操作</th></tr></thead>
+        <tbody>${ids.map(id => `
+          <tr>
+            <td>#${id}</td>
+            <td><input class="inline-edit" value="${customTranslations[id]}" onchange="updateTrans('${id}', this.value)"></td>
+            <td><button class="btn" onclick="deleteTrans('${id}')">刪除</button></td>
           </tr>`).join('')}
         </tbody>
       </table>
-      ` : `
-      <div class="empty">
-        <div class="empty-icon">📝</div>
-        <p>尚無自訂道具。搜尋並新增後，可在此編輯繁中名稱。</p>
-      </div>
-      `}
-    </div>
-  `;
+    </div>`;
 }
 
-function onCustomSearch(val) {
-  clearTimeout(searchTimer);
-  if (val.length < 1) { hideDD(); return; }
-  searchTimer = setTimeout(() => doSearch(val, true), 380);
+// ─── 功能函數 ─────────────────────────────────────────────────────────
+function updateTrans(id, val) { customTranslations[id] = val; save(); render(); }
+function deleteTrans(id) { delete customTranslations[id]; save(); render(); }
+function switchTab(i) { state.activeTab = i; render(); }
+function hideDD() { setTimeout(() => document.getElementById('dd').classList.remove('show'), 200); }
+function removeItem(id) {
+  state.retainers[state.activeTab].items = state.retainers[state.activeTab].items.filter(i => i.id !== id);
+  save(); render();
 }
 
-function updateCustomTw(idx, val) {
-  customItems[idx].name_tw = val.trim();
-  saveCustomItems();
-  // 不需要重新 render 整個頁面，保持輸入焦點
-}
-
-function removeCustomItem(idx) {
-  customItems.splice(idx, 1);
-  saveCustomItems();
-  renderCustomTab();
-}
-
-function addCustomItem(e, id, name_chs) {
-  e.preventDefault();
-  if (customItems.find(it => String(it.id) === String(id))) {
-    alert('此道具已在自訂清單中');
-    return;
-  }
-  const name_tw = chs2tw(name_chs);
-  customItems.push({ id: Number(id), name_tw, name_chs });
-  saveCustomItems();
-  const inp = document.getElementById('customSearchInput');
-  if (inp) inp.value = '';
-  hideDD();
-  renderCustomTab();
-}
-
-function openRename(i) {
-  renamingIdx = i;
-  document.getElementById('renameInput').value = state.retainers[i].name;
-  document.getElementById('renameModal').classList.add('show');
-  setTimeout(() => document.getElementById('renameInput').focus(), 50);
-}
-
-function closeRename() {
-  document.getElementById('renameModal').classList.remove('show');
-  renamingIdx = null;
-}
-
-function confirmRename() {
-  const val = document.getElementById('renameInput').value.trim();
-  if (val && renamingIdx !== null) {
-    state.retainers[renamingIdx].name = val;
-    save();
-    render();
-  }
-  closeRename();
-}
-
-document.getElementById('renameInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') confirmRename();
-  if (e.key === 'Escape') closeRename();
-});
-
-document.getElementById('renameModal').addEventListener('click', e => {
-  if (e.target === document.getElementById('renameModal')) closeRename();
-});
-
-// ─── Sort ────────────────────────────────────────────────────────────────────
-
-function setSort(key) {
-  if (activeSort === key) {
-    sortDir[key] = sortDir[key] === 'asc' ? 'desc' : 'asc';
-  } else {
-    activeSort = key;
-  }
-  render();
-}
-
-// ─── Search（優先自訂清單，其次 CaféMaker 簡體搜尋）───────────────────────────
-
-function onSearch(val) {
-  clearTimeout(searchTimer);
-  if (val.length < 1) { hideDD(); return; }
-  searchTimer = setTimeout(() => doSearch(val), 380);
-}
-
-async function doSearch(q, isCustomTab = false) {
-  const dd = document.getElementById('dd');
-  if (!dd) return;
-  dd.innerHTML = '<div class="dd-item" style="color:var(--text2)">搜尋中…</div>';
-  dd.classList.add('show');
-
-  // 1. 先比對自訂清單（繁中名稱完整比對）
-  const customHits = customItems.filter(it =>
-    it.name_tw && it.name_tw.includes(q)
-  );
-
-  // 2. CaféMaker 搜尋（繁→簡轉換後送出）
-  let cafeResults = [];
+async function fetchMarket(ids) {
+  if (!ids.length) return;
   try {
-    const q_chs = tw2chs(q);
-    const url = `${CAFE}/search?string=${encodeURIComponent(q_chs)}&indexes=Item&limit=15`;
-    const res = await fetch(url);
+    const res = await fetch(`${UNI}/${SERVER}/${ids.join(',')}?entriesWithin=604800`);
     const data = await res.json();
-    cafeResults = data.Results || [];
-  } catch (e) {
-    // 搜尋失敗時繼續，只用自訂清單
-  }
-
-  // 3. 合併：自訂清單優先，再附上 CaféMaker 結果（排除已在自訂清單的 id）
-  const customIds = new Set(customHits.map(it => String(it.id)));
-  const merged = [
-    ...customHits.map(it => ({ id: String(it.id), name: it.name_tw, tag: '自訂' })),
-    ...cafeResults
-      .filter(r => !customIds.has(String(r.ID)))
-      .map(r => ({ id: String(r.ID), name: r.Name, tag: '' }))
-  ];
-
-  if (merged.length === 0) {
-    dd.innerHTML = '<div class="dd-item" style="color:var(--text2)">找不到道具，可試試簡體或英文名稱</div>';
-    return;
-  }
-
-  const addFn = isCustomTab ? 'addCustomItem' : 'addItem';
-  dd.innerHTML = merged.map(item => `
-    <div class="dd-item" onmousedown="${addFn}(event,'${esc(item.id)}','${esc(item.name)}')">
-      <span>${esc(item.name)}</span>
-      ${item.tag ? `<span class="dd-sub">${esc(item.tag)}</span>` : ''}
-      <span class="dd-sub" style="float:right;opacity:0.5">#${esc(item.id)}</span>
-    </div>
-  `).join('');
-}
-
-function hideDD() {
-  setTimeout(() => {
-    const dd = document.getElementById('dd');
-    if (dd) dd.classList.remove('show');
-  }, 160);
-}
-
-// ─── Items ───────────────────────────────────────────────────────────────────
-
-function addItem(e, id, name) {
-  e.preventDefault();
-  const r = state.retainers[state.activeTab];
-  if (r.items.find(it => it.id === id)) {
-    alert('此道具已在清單中');
-    return;
-  }
-  r.items.push({ id, name });
-  save();
-    // 若自訂清單尚無此道具，自動新增
-  if (!customItems.find(it => String(it.id) === String(id))) {
-    customItems.push({ id: Number(id), name_tw: chs2tw(name), name_chs: name });
-    saveCustomItems();
-  }
-  const inp = document.getElementById('searchInput');
-  if (inp) inp.value = '';
-  hideDD();
-  fetchMarket([{ id }]);
-  render();
-}
-
-function removeItem(tabIdx, id) {
-  state.retainers[tabIdx].items = state.retainers[tabIdx].items.filter(it => it.id !== id);
-  delete marketCache[id];
-  save();
-  render();
-}
-
-// ─── Market data (Universalis) ────────────────────────────────────────────────
-
-async function fetchMarket(items) {
-  const ids = items.map(it => it.id).filter(id => !marketCache[id] || marketCache[id] === 'error');
-  if (ids.length === 0) return;
-  ids.forEach(id => { marketCache[id] = 'loading'; });
-  render();
-
-  const CHUNK = 15;
-  for (let i = 0; i < ids.length; i += CHUNK) {
-    const chunk = ids.slice(i, i + CHUNK);
-    try {
-      const url = `${UNI}/${SERVER}/${chunk.join(',')}?fields=listings,recentHistory&entriesWithin=604800`;
-      const res = await fetch(url);
-      const data = await res.json();
-
-      const process = (itemId, d) => {
-        if (!d) { marketCache[itemId] = 'error'; return; }
-        const listings = d.listings || [];
-        const minPrice = listings.length > 0
-          ? Math.min(...listings.map(l => l.pricePerUnit))
-          : null;
-        const history = d.recentHistory || [];
-        const weekAgo = Date.now() / 1000 - 7 * 86400;
-        const recent = history.filter(h => h.timestamp >= weekAgo);
-const recentVol = recent.length > 0
-  ? recent.reduce((s, h) => s + h.quantity, 0)
-  : 0;
-        marketCache[itemId] = { minPrice, recentVol };
+    const update = (id, d) => {
+      marketCache[id] = {
+        price: d.listings?.[0]?.pricePerUnit || null,
+        vol: d.recentHistory?.reduce((acc, cur) => acc + cur.quantity, 0) || 0
       };
-
-      if (chunk.length === 1) {
-        process(chunk[0], data);
-      } else {
-        const itemsMap = data.items || {};
-        chunk.forEach(id => process(id, itemsMap[id]));
-      }
-    } catch (e) {
-      chunk.forEach(id => { marketCache[id] = 'error'; });
-    }
-    render();
-  }
+    };
+    if (ids.length === 1) update(ids[0], data);
+    else Object.keys(data.items).forEach(id => update(id, data.items[id]));
+    save(); refreshMarketDisplay();
+  } catch (e) { console.error("市場資料抓取失敗"); }
 }
 
-async function refreshAll() {
-  state.retainers.forEach(r => r.items.forEach(it => { delete marketCache[it.id]; }));
-  document.getElementById('lastRefresh').textContent = '';
-  render();
-  const allItems = state.retainers.flatMap(r => r.items);
-  await fetchMarket(allItems);
+function refreshAll() {
+  const allIds = [...new Set(state.retainers.flatMap(r => r.items.map(i => i.id)))];
+  fetchMarket(allIds);
   const now = new Date();
-  document.getElementById('lastRefresh').textContent =
-    `上次更新 ${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('lastRefresh').textContent = `上次更新: ${now.getHours()}:${now.getMinutes()}`;
 }
 
-// ─── Utils ───────────────────────────────────────────────────────────────────
+function refreshMarketDisplay() { render(); }
 
-function esc(str) {
-  return String(str || '')
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
+// ─── 初始啟動 ─────────────────────────────────────────────────────────
+initDB();
 
-// ─── Init ────────────────────────────────────────────────────────────────────
-
-loadCustomItems();
-render();
-const allItems = state.retainers.flatMap(r => r.items);
-if (allItems.length > 0) fetchMarket(allItems);
 </script>
 </body>
 </html>
