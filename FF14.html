@@ -653,7 +653,7 @@ function renderRow(item) {
     const v = mkt.recentVol;
     if (v != null) {
       const cls = v >= 50 ? 'vol-high' : v >= 10 ? 'vol-med' : 'vol-low';
-      volCell = `<span class="vol-badge ${cls}">${v}/天</span>`;
+      volCell = `<span class="vol-badge ${cls}">${v}/7天</span>`;
     }
   }
 
@@ -893,6 +893,11 @@ function addItem(e, id, name) {
   }
   r.items.push({ id, name });
   save();
+    // 若自訂清單尚無此道具，自動新增
+  if (!customItems.find(it => String(it.id) === String(id))) {
+    customItems.push({ id: Number(id), name_tw: chs2tw(name), name_chs: name });
+    saveCustomItems();
+  }
   const inp = document.getElementById('searchInput');
   if (inp) inp.value = '';
   hideDD();
@@ -932,9 +937,9 @@ async function fetchMarket(items) {
         const history = d.recentHistory || [];
         const weekAgo = Date.now() / 1000 - 7 * 86400;
         const recent = history.filter(h => h.timestamp >= weekAgo);
-        const recentVol = recent.length > 0
-          ? Math.round(recent.reduce((s, h) => s + h.quantity, 0) / 7)
-          : 0;
+const recentVol = recent.length > 0
+  ? recent.reduce((s, h) => s + h.quantity, 0)
+  : 0;
         marketCache[itemId] = { minPrice, recentVol };
       };
 
