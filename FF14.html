@@ -345,7 +345,7 @@ function render() {
 
       <div class="sort-bar">
         <button class="sort-btn ${activeSort === 'none' ? 'active' : ''}" onclick="activeSort='none'; render();">取消排序</button>
-        <button class="sort-btn ${activeSort === 'price' ? 'active' : ''}" onclick="toggleSort('price')">最低單價 ${getSortIcon('price')}</button>
+        <button class="sort-btn ${activeSort === 'price' ? 'active' : ''}" onclick="toggleSort('price')">平均單價 ${getSortIcon('price')}</button>
         <button class="sort-btn ${activeSort === 'vol' ? 'active' : ''}" onclick="toggleSort('vol')">成交量 ${getSortIcon('vol')}</button>
       </div>
 
@@ -353,7 +353,7 @@ function render() {
         <thead>
           <tr>
             <th>道具名稱</th>
-            <th class="r">${isSoldTab ? '日期' : 'ID'}</th> <th class="r">最低單價</th>
+            <th class="r">${isSoldTab ? '日期' : 'ID'}</th> <th class="r">平均單價</th>
             <th class="r">7日成交</th>
             <th></th>
           </tr>
@@ -487,15 +487,24 @@ async function fetchMarket(ids) {
       const res = await fetch(`${UNI}/${SERVER}/${chunk.join(',')}?entriesWithin=604800`);
       const data = await res.json();
       
-      const updateCache = (itemId, info) => {
-        if (!info) {
-          marketCache[itemId] = { price: 0, vol: 0 };
-          return;
-        }
-        const price = info.listings?.[0]?.pricePerUnit || 0;
-        const vol = info.recentHistory?.reduce((sum, h) => sum + h.quantity, 0) || 0;
-        marketCache[itemId] = { price, vol };
+const updateCache = (id, info) => {
+      const history = info.recentHistory || [];
+      // 計算 7 天總成交金額與總數量
+      const totals = history.reduce((acc, h) => {
+        acc.totalGil += (h.pricePerUnit * h.quantity);
+        acc.totalQty += h.quantity;
+        return acc;
+      }, { totalGil: 0, totalQty: 0 });
+
+      const vol = totals.totalQty;
+      // 計算平均單價 (若無成交量則為 0)
+      const avgPrice = vol > 0 ? Math.round(totals.totalGil / vol) : 0;
+      
+      marketCache[id] = { 
+        price: avgPrice, // 用平均價取代原本的最便宜單價
+        vol: vol 
       };
+    };
 
       if (chunk.length === 1) {
         updateCache(chunk[0], data);
@@ -543,12 +552,12 @@ function sellItem(id) {
   const item = r.items[itemIndex];
   const m = marketCache[id] || {};
 
-  const soldData = {
+const soldData = {
     ...item,
-    soldPrice: (m && m.price) ? m.price : 0,
-    soldVol: (m && m.vol !== undefined) ? m.vol : 0,
+    soldPrice: (m && m.price) ? m.price : '---',
+    soldVol: (m && m.vol !== undefined) ? m.vol : '---',
     fromRetainer: state.activeTab,
-    soldDate: new Date().toLocaleDateString('zh-TW') // 格式：2026/5/9
+    soldDate: new Date().toLocaleDateString('zh-TW')
   };
 
   state.soldItems.unshift(soldData);
