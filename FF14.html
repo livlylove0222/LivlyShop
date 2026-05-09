@@ -193,8 +193,11 @@ const RETAINER_NAMES = ['隱翠', '庫姆', '雲形'];
 let state = JSON.parse(localStorage.getItem('ff14_market_v3')) || {
   retainers: RETAINER_NAMES.map(name => ({ name, items: [] })),
   activeTab: 0,
-  customTranslations: {} // { id: "自訂繁中名" }
+  customTranslations: {},
+  soldItems: [] // 新增：初始化售出清單
 };
+// 確保舊資料升級後也有此欄位
+state.soldItems = state.soldItems || [];
 
 let itemDB = new Map(); // 格式: id -> { tw: "", en: "" }
 let marketCache = {};
@@ -324,9 +327,15 @@ function updateTranslation(id, newName) {
 function render() {
   renderTabs();
   const content = document.getElementById('tabContent');
-  
+
   if (state.activeTab === 'custom') {
     renderCustomPage(content);
+    return;
+  }
+
+  // 渲染售出分頁
+  if (state.activeTab === 'sold') {
+    renderSoldPage(content);
     return;
   }
 
@@ -360,6 +369,39 @@ function render() {
   `;
 }
 
+function renderSoldPage(container) {
+  container.innerHTML = `
+    <div class="panel">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <h3>💰 售出紀錄</h3>
+        <span style="font-size:12px; color:var(--text3)">此頁面僅紀錄搬移當下的行情</span>
+      </div>
+      <table class="item-table">
+        <thead>
+          <tr><th>道具名稱</th><th class="r">售出時單價</th><th class="r">售出時成交</th><th class="r">操作</th></tr>
+        </thead>
+        <tbody>
+          ${state.soldItems.map((it, idx) => `
+            <tr>
+              <td>
+                <div style="font-weight:500; color:var(--text2)">${state.customTranslations[it.id] || it.name}</div>
+                <div style="font-size:10px; color:var(--text3)">#${it.id} · 歸檔於 ${it.soldDate}</div>
+              </td>
+              <td class="r" style="color:var(--text2)">${typeof it.soldPrice === 'number' ? it.soldPrice.toLocaleString() : it.soldPrice}</td>
+              <td class="r" style="color:var(--text2)">${it.soldVol}</td>
+              <td class="r">
+                <button class="del-btn" onclick="restoreItem(${idx})" title="復原至原僱員" style="margin-right:8px">↶</button>
+                <button class="del-btn" onclick="state.soldItems.splice(${idx}, 1); save(); render();">✕</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+      ${state.soldItems.length === 0 ? '<div style="text-align:center; padding:40px; color:#999;">目前沒有售出紀錄</div>' : ''}
+    </div>
+  `;
+}
+
 function renderRow(item) {
   const m = marketCache[item.id];
   let pStr, vStr;
@@ -384,7 +426,10 @@ function renderRow(item) {
       <td class="r" style="font-size:11px; color:#aaa">${item.id}</td>
       <td class="r">${pStr}</td>
       <td class="r">${vStr}</td>
-      <td class="r"><button class="del-btn" onclick="removeItem('${item.id}')">✕</button></td>
+      <td class="r">
+        <button class="del-btn" onclick="sellItem(${state.retainers[state.activeTab].items.indexOf(item)})" title="移至售出" style="margin-right:8px">👛</button>
+        <button class="del-btn" onclick="removeItem('${item.id}')">✕</button>
+      </td>
     </tr>
   `;
 }
@@ -415,8 +460,9 @@ function renderTabs() {
   const tabs = state.retainers.map((r, i) => `
     <div class="tab ${state.activeTab === i ? 'active' : ''}" onclick="switchTab(${i})">${r.name}</div>
   `).join('');
+  const soldTab = `<div class="tab ${state.activeTab === 'sold' ? 'active' : ''}" onclick="switchTab('sold')">售出</div>`;
   const custom = `<div class="tab ${state.activeTab === 'custom' ? 'active' : ''}" onclick="switchTab('custom')" style="margin-left:auto">✦ 自訂</div>`;
-  document.getElementById('tabBar').innerHTML = tabs + custom;
+  document.getElementById('tabBar').innerHTML = tabs + soldTab + custom;
 }
 
 // ─── 排序與功能邏輯 ───
@@ -531,6 +577,44 @@ function refreshAll() {
 
 // 啟動
 initDB();
+
+// 移至售出
+function sellItem(itemIndex) {
+  const r = state.retainers[state.activeTab];
+  const item = r.items[itemIndex];
+  const m = marketCache[item.id] || {};
+
+  // 紀錄當下資訊 (若為 loading 則存為 ---)
+  const soldData = {
+    ...item,
+    soldPrice: (m !== 'loading' && m.price) ? m.price : '---',
+    soldVol: (m !== 'loading' && m.vol) ? m.vol : '---',
+    fromRetainer: state.activeTab, // 方案B：紀錄來源分頁
+    soldDate: new Date().toLocaleDateString()
+  };
+
+  state.soldItems.unshift(soldData);
+  r.items.splice(itemIndex, 1);
+  save();
+  render();
+}
+
+// 復原道具
+function restoreItem(soldIndex) {
+  const item = state.soldItems[soldIndex];
+  const targetIndex = item.fromRetainer;
+  
+  // 回到紀錄中的來源僱員分頁
+  state.retainers[targetIndex].items.unshift({
+    id: item.id,
+    name: item.name
+  });
+
+  state.soldItems.splice(soldIndex, 1);
+  save();
+  fetchMarket([item.id]); // 復原後重新抓取動態行情
+  render();
+}
 </script>
 </body>
 </html>
