@@ -141,7 +141,7 @@
   .dd-tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--bg3); color: var(--text2); }
   .dd-en { color: #a37c2d; font-weight: 500; }
 
-  .sort-bar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; font-size: 13px; color: var(--text2); }
+  .sort-bar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; font-size: 13px; color: var(--text2);justify-content: flex-end; }
   .sort-btn { padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border); background: none; cursor: pointer; color: var(--text2); }
   .sort-btn.active { background: var(--bg2); color: var(--text); border-color: var(--border2); }
 
@@ -344,7 +344,7 @@ function render() {
       </div>
 
       <div class="sort-bar">
-        <span>排序：</span>
+        <button class="sort-btn ${activeSort === 'none' ? 'active' : ''}" onclick="activeSort='none'; render();">取消排序</button>
         <button class="sort-btn ${activeSort === 'price' ? 'active' : ''}" onclick="toggleSort('price')">最低單價 ${getSortIcon('price')}</button>
         <button class="sort-btn ${activeSort === 'vol' ? 'active' : ''}" onclick="toggleSort('vol')">成交量 ${getSortIcon('vol')}</button>
       </div>
