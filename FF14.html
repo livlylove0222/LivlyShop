@@ -194,10 +194,9 @@ let state = JSON.parse(localStorage.getItem('ff14_market_v3')) || {
   retainers: RETAINER_NAMES.map(name => ({ name, items: [] })),
   activeTab: 0,
   customTranslations: {},
-  soldItems: [] // 新增：初始化售出清單
+  soldItems: [] // 新增初始化
 };
-// 確保舊資料升級後也有此欄位
-state.soldItems = state.soldItems || [];
+state.soldItems = state.soldItems || []; // 確保升級後有此欄位
 
 let itemDB = new Map(); // 格式: id -> { tw: "", en: "" }
 let marketCache = {};
@@ -327,20 +326,15 @@ function updateTranslation(id, newName) {
 function render() {
   renderTabs();
   const content = document.getElementById('tabContent');
-
+  
   if (state.activeTab === 'custom') {
     renderCustomPage(content);
     return;
   }
 
-  // 渲染售出分頁
-  if (state.activeTab === 'sold') {
-    renderSoldPage(content);
-    return;
-  }
-
-  const r = state.retainers[state.activeTab];
-  const displayItems = getSortedItems(r.items);
+  const isSoldTab = state.activeTab === 'sold';
+  const items = isSoldTab ? state.soldItems : state.retainers[state.activeTab].items;
+  const displayItems = getSortedItems(items);
 
   content.innerHTML = `
     <div class="panel">
@@ -353,82 +347,46 @@ function render() {
         <span>排序：</span>
         <button class="sort-btn ${activeSort === 'price' ? 'active' : ''}" onclick="toggleSort('price')">最低單價 ${getSortIcon('price')}</button>
         <button class="sort-btn ${activeSort === 'vol' ? 'active' : ''}" onclick="toggleSort('vol')">成交量 ${getSortIcon('vol')}</button>
-        <button class="sort-btn ${activeSort === 'none' ? 'active' : ''}" onclick="resetSort()">取消排序</button>
       </div>
 
       <table class="item-table">
         <thead>
-          <tr><th>道具名稱</th><th class="r">ID</th><th class="r">最低單價</th><th class="r">7日成交</th><th></th></tr>
+          <tr>
+            <th>道具名稱</th>
+            <th class="r">${isSoldTab ? '日期' : 'ID'}</th> <th class="r">最低單價</th>
+            <th class="r">7日成交</th>
+            <th></th>
+          </tr>
         </thead>
         <tbody>
-          ${displayItems.map(it => renderRow(it)).join('')}
+          ${displayItems.map((it, idx) => renderRow(it, isSoldTab, idx)).join('')}
         </tbody>
       </table>
-      ${r.items.length === 0 ? '<div style="text-align:center; padding:40px; color:#999;">尚未新增道具</div>' : ''}
+      ${items.length === 0 ? '<div style="text-align:center; padding:40px; color:#999;">尚未新增道具</div>' : ''}
     </div>
   `;
 }
 
-function renderSoldPage(container) {
-  container.innerHTML = `
-    <div class="panel">
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-        <h3>💰 售出紀錄</h3>
-        <span style="font-size:12px; color:var(--text3)">此頁面僅紀錄搬移當下的行情</span>
-      </div>
-      <table class="item-table">
-        <thead>
-          <tr><th>道具名稱</th><th class="r">售出時單價</th><th class="r">售出時成交</th><th class="r">操作</th></tr>
-        </thead>
-        <tbody>
-          ${state.soldItems.map((it, idx) => `
-            <tr>
-              <td>
-                <div style="font-weight:500; color:var(--text2)">${state.customTranslations[it.id] || it.name}</div>
-                <div style="font-size:10px; color:var(--text3)">#${it.id} · 歸檔於 ${it.soldDate}</div>
-              </td>
-              <td class="r" style="color:var(--text2)">${typeof it.soldPrice === 'number' ? it.soldPrice.toLocaleString() : it.soldPrice}</td>
-              <td class="r" style="color:var(--text2)">${it.soldVol}</td>
-              <td class="r">
-                <button class="del-btn" onclick="restoreItem(${idx})" title="復原至原僱員" style="margin-right:8px">↶</button>
-                <button class="del-btn" onclick="state.soldItems.splice(${idx}, 1); save(); render();">✕</button>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-      ${state.soldItems.length === 0 ? '<div style="text-align:center; padding:40px; color:#999;">目前沒有售出紀錄</div>' : ''}
-    </div>
-  `;
-}
-
-function renderRow(item) {
-  const m = marketCache[item.id];
-  let pStr, vStr;
-
-  if (m === 'loading') {
-    // 照你要求的：單價顯示 ---，成交顯示 Loading
-    pStr = '<span style="color:var(--text3)">---</span>';
-    vStr = '<span style="color:var(--accent); font-size: 11px;">Loading</span>';
-  } else if (m && m.price !== undefined) {
-    pStr = m.price > 0 ? `<span class="price-val">${m.price.toLocaleString()}</span>` : '<span style="color:#ccc">---</span>';
-    vStr = `<span class="vol-badge ${m.vol > 20 ? 'vol-high' : 'vol-low'}">${m.vol}</span>`;
-  } else {
-    pStr = '<span style="color:#ccc">---</span>';
-    vStr = '<span style="color:#ccc">---</span>';
-  }
+function renderRow(item, isSoldTab, index) {
+  // 如果是售出分頁，使用固化的靜態數據，否則使用動態快取
+  const p = isSoldTab ? item.soldPrice : (marketCache[item.id]?.price || 0);
+  const v = isSoldTab ? item.soldVol : (marketCache[item.id]?.vol || 0);
   
+  const pStr = p > 0 ? `<span class="price-val">${p.toLocaleString()}</span>` : '<span style="color:#ccc">---</span>';
+  const vStr = `<span class="vol-badge ${v > 20 ? 'vol-high' : 'vol-low'}">${v}</span>`;
   const displayName = state.customTranslations[item.id] || (itemDB.get(item.id)?.tw) || item.name;
 
   return `
     <tr>
       <td><div style="font-weight:500">${displayName}</div></td>
-      <td class="r" style="font-size:11px; color:#aaa">${item.id}</td>
-      <td class="r">${pStr}</td>
+      <td class="r" style="font-size:11px; color:#aaa">${isSoldTab ? item.soldDate : item.id}</td> <td class="r">${pStr}</td>
       <td class="r">${vStr}</td>
       <td class="r">
-        <button class="del-btn" onclick="sellItem(${state.retainers[state.activeTab].items.indexOf(item)})" title="移至售出" style="margin-right:8px">👛</button>
-        <button class="del-btn" onclick="removeItem('${item.id}')">✕</button>
+        ${isSoldTab 
+          ? `<button class="del-btn" onclick="restoreItem(${index})" title="復原至原僱員" style="margin-right:12px;">↶</button>`
+          : `<button class="del-btn" onclick="sellItem('${item.id}')" title="移至售出" style="margin-right:12px;">⇄</button>`
+        }
+        <button class="del-btn" onclick="${isSoldTab ? `state.soldItems.splice(${index},1); save(); render();` : `removeItem('${item.id}')`}">✕</button>
       </td>
     </tr>
   `;
@@ -460,6 +418,7 @@ function renderTabs() {
   const tabs = state.retainers.map((r, i) => `
     <div class="tab ${state.activeTab === i ? 'active' : ''}" onclick="switchTab(${i})">${r.name}</div>
   `).join('');
+  // 插入「售出」分頁
   const soldTab = `<div class="tab ${state.activeTab === 'sold' ? 'active' : ''}" onclick="switchTab('sold')">售出</div>`;
   const custom = `<div class="tab ${state.activeTab === 'custom' ? 'active' : ''}" onclick="switchTab('custom')" style="margin-left:auto">✦ 自訂</div>`;
   document.getElementById('tabBar').innerHTML = tabs + soldTab + custom;
@@ -578,19 +537,18 @@ function refreshAll() {
 // 啟動
 initDB();
 
-// 移至售出
-function sellItem(itemIndex) {
+function sellItem(id) {
   const r = state.retainers[state.activeTab];
+  const itemIndex = r.items.findIndex(it => it.id === id);
   const item = r.items[itemIndex];
-  const m = marketCache[item.id] || {};
+  const m = marketCache[id] || {};
 
-  // 紀錄當下資訊 (若為 loading 則存為 ---)
   const soldData = {
     ...item,
-    soldPrice: (m !== 'loading' && m.price) ? m.price : '---',
-    soldVol: (m !== 'loading' && m.vol) ? m.vol : '---',
-    fromRetainer: state.activeTab, // 方案B：紀錄來源分頁
-    soldDate: new Date().toLocaleDateString()
+    soldPrice: (m && m.price) ? m.price : 0,
+    soldVol: (m && m.vol !== undefined) ? m.vol : 0,
+    fromRetainer: state.activeTab,
+    soldDate: new Date().toLocaleDateString('zh-TW') // 格式：2026/5/9
   };
 
   state.soldItems.unshift(soldData);
@@ -599,22 +557,18 @@ function sellItem(itemIndex) {
   render();
 }
 
-// 復原道具
 function restoreItem(soldIndex) {
   const item = state.soldItems[soldIndex];
   const targetIndex = item.fromRetainer;
   
-  // 回到紀錄中的來源僱員分頁
-  state.retainers[targetIndex].items.unshift({
-    id: item.id,
-    name: item.name
-  });
-
+  state.retainers[targetIndex].items.unshift({ id: item.id, name: item.name });
   state.soldItems.splice(soldIndex, 1);
+  
   save();
-  fetchMarket([item.id]); // 復原後重新抓取動態行情
+  fetchMarket([item.id]); 
   render();
 }
+
 </script>
 </body>
 </html>
