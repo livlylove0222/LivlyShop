@@ -1,280 +1,415 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<link rel="icon" href="/LivlyShop/favicon.ico">
-<title>FF14 僱員市場分析</title>
-<style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-  :root {
-    --bg: #ffffff;
-    --bg2: #f5f5f4;
-    --bg3: #eeece9;
-    --text: #1c1c1a;
-    --text2: #6b6b67;
-    --text3: #a09f9b;
-    --border: rgba(0,0,0,0.12);
-    --border2: rgba(0,0,0,0.22);
-    --radius: 8px;
-    --radius-lg: 12px;
-    --danger-bg: #fcebeb;
-    --danger-text: #a32d2d;
-    --accent: #4a90e2;
-  }
-
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #1e1e1c;
-      --bg2: #272724;
-      --bg3: #303030;
-      --text: #e8e6e1;
-      --text2: #9a9890;
-      --text3: #5e5d58;
-      --border: rgba(255,255,255,0.1);
-      --border2: rgba(255,255,255,0.2);
-      --danger-bg: #3a1414;
-      --danger-text: #f09595;
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/LivlyShop/favicon.ico">
+  <title>FF14 僱員市場分析</title>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
     }
-  }
 
-  body {
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
-    background: var(--bg3);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 24px 16px;
-  }
+    :root {
+      --bg: #ffffff;
+      --bg2: #f5f5f4;
+      --bg3: #eeece9;
+      --text: #1c1c1a;
+      --text2: #6b6b67;
+      --text3: #a09f9b;
+      --border: rgba(0, 0, 0, 0.12);
+      --border2: rgba(0, 0, 0, 0.22);
+      --radius: 8px;
+      --radius-lg: 12px;
+      --danger-bg: #fcebeb;
+      --danger-text: #a32d2d;
+      --accent: #4a90e2;
+    }
 
-  .app { max-width: 780px; margin: 0 auto; }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #1e1e1c;
+        --bg2: #272724;
+        --bg3: #303030;
+        --text: #e8e6e1;
+        --text2: #9a9890;
+        --text3: #5e5d58;
+        --border: rgba(255, 255, 255, 0.1);
+        --border2: rgba(255, 255, 255, 0.2);
+        --danger-bg: #3a1414;
+        --danger-text: #f09595;
+      }
+    }
 
-  .header {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 20px;
-    gap: 12px;
-  }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
+      background: var(--bg3);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 16px;
+    }
 
-  .title { font-size: 20px; font-weight: 600; }
-  .subtitle { font-size: 13px; color: var(--text2); margin-top: 3px; }
+    .app {
+      max-width: 780px;
+      margin: 0 auto;
+    }
 
-  .loading-overlay {
-    position: fixed;
-    top: 10px;
-    right: 10px;
-    background: var(--accent);
-    color: white;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 12px;
-    display: none;
-    z-index: 1000;
-  }
+    .header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: 20px;
+      gap: 12px;
+    }
 
-  .btn {
-    background: var(--bg);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius);
-    padding: 7px 14px;
-    font-size: 13px;
-    cursor: pointer;
-    color: var(--text);
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    font-family: inherit;
-  }
+    .title {
+      font-size: 20px;
+      font-weight: 600;
+    }
 
-  .btn-primary { background: var(--text); color: var(--bg); border-color: var(--text); }
+    .subtitle {
+      font-size: 13px;
+      color: var(--text2);
+      margin-top: 3px;
+    }
 
-  .tabs { display: flex; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-  .tab {
-    padding: 12px 18px;
-    font-size: 14px;
-    cursor: pointer;
-    color: var(--text2);
-    border: none;
-    background: none;
-    border-bottom: 2px solid transparent;
-    transition: all 0.12s;
-  }
-  .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 600; }
+    .loading-overlay {
+      position: fixed;
+      top: 10px;
+      right: 10px;
+      background: var(--accent);
+      color: white;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      display: none;
+      z-index: 1000;
+    }
 
-  .panel { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 20px; }
+    .btn {
+      background: var(--bg);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      padding: 7px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      color: var(--text);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-family: inherit;
+    }
 
-  .search-row { position: relative; margin-bottom: 14px; }
-  .search-row input {
-    width: 100%;
-    padding: 10px 14px;
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius);
-    background: var(--bg2);
-    color: var(--text);
-    outline: none;
-  }
+    .btn-primary {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
 
-  .dropdown {
-    position: absolute;
-    top: calc(100% + 4px);
-    left: 0; right: 0;
-    background: var(--bg);
-    border: 0.5px solid var(--border2);
-    border-radius: var(--radius);
-    z-index: 100;
-    max-height: 400px;
-    overflow-y: auto;
-    display: none;
-    box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-  }
-  .dropdown.show { display: block; }
-  .dd-item {
-    padding: 10px 14px;
-    font-size: 14px;
-    cursor: pointer;
-    border-bottom: 0.5px solid var(--border);
-    display: flex;
-    justify-content: space-between;
-  }
-  .dd-item:hover { background: var(--bg2); }
-  .dd-tag { font-size: 11px; padding: 2px 6px; border-radius: 4px; background: var(--bg3); color: var(--text2); }
-  .dd-en { color: #a37c2d; font-weight: 500; }
+    .tabs {
+      display: flex;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 20px;
+    }
 
-  .sort-bar { display: flex; gap: 8px; margin-bottom: 14px; align-items: center; font-size: 13px; color: var(--text2);justify-content: flex-end; }
-  .sort-btn { padding: 4px 12px; border-radius: 20px; border: 0.5px solid var(--border); background: none; cursor: pointer; color: var(--text2); }
-  .sort-btn.active { background: var(--bg2); color: var(--text); border-color: var(--border2); }
+    .tab {
+      padding: 12px 18px;
+      font-size: 14px;
+      cursor: pointer;
+      color: var(--text2);
+      border: none;
+      background: none;
+      border-bottom: 2px solid transparent;
+      transition: all 0.12s;
+    }
 
-  .item-table { width: 100%; border-collapse: collapse; }
-  .item-table th { font-size: 12px; color: var(--text2); text-align: left; padding: 8px; border-bottom: 0.5px solid var(--border); }
-  .item-table td { padding: 12px 8px; font-size: 14px; border-bottom: 0.5px solid var(--border); }
-  .r {text-align: right !important;}
-  
-  .price-val { font-variant-numeric: tabular-nums; font-weight: 500; }
-  .vol-badge { padding: 2px 8px; border-radius: 10px; font-size: 11px; }
-  .vol-high { background: #EAF3DE; color: #3B6D11; }
-  .vol-low { background: #f1f0ec; color: #5F5E5A; }
+    .tab.active {
+      color: var(--text);
+      border-bottom-color: var(--text);
+      font-weight: 600;
+    }
 
-  .del-btn { background: none; border: none; cursor: pointer; color: var(--text3); font-size: 14px; }
-  .del-btn:hover { color: var(--danger-text); }
+    .panel {
+      background: var(--bg);
+      border: 0.5px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
 
-  .inline-edit { width: 100%; padding: 4px; border: 1px solid transparent; background: transparent; color: var(--text); }
-  .inline-edit:focus { border-color: var(--border2); background: var(--bg2); outline: none; }
-</style>
+    .search-row {
+      position: relative;
+      margin-bottom: 14px;
+    }
+
+    .search-row input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      background: var(--bg2);
+      color: var(--text);
+      outline: none;
+    }
+
+    .dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      background: var(--bg);
+      border: 0.5px solid var(--border2);
+      border-radius: var(--radius);
+      z-index: 100;
+      max-height: 400px;
+      overflow-y: auto;
+      display: none;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    }
+
+    .dropdown.show {
+      display: block;
+    }
+
+    .dd-item {
+      padding: 10px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      border-bottom: 0.5px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .dd-item:hover {
+      background: var(--bg2);
+    }
+
+    .dd-tag {
+      font-size: 11px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      background: var(--bg3);
+      color: var(--text2);
+    }
+
+    .dd-en {
+      color: #a37c2d;
+      font-weight: 500;
+    }
+
+    .sort-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      align-items: center;
+      font-size: 13px;
+      color: var(--text2);
+      justify-content: flex-end;
+    }
+
+    .sort-btn {
+      padding: 4px 12px;
+      border-radius: 20px;
+      border: 0.5px solid var(--border);
+      background: none;
+      cursor: pointer;
+      color: var(--text2);
+    }
+
+    .sort-btn.active {
+      background: var(--bg2);
+      color: var(--text);
+      border-color: var(--border2);
+    }
+
+    .item-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .item-table th {
+      font-size: 12px;
+      color: var(--text2);
+      text-align: left;
+      padding: 8px;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .item-table td {
+      padding: 12px 8px;
+      font-size: 14px;
+      border-bottom: 0.5px solid var(--border);
+    }
+
+    .r {
+      text-align: right !important;
+    }
+
+    .price-val {
+      font-variant-numeric: tabular-nums;
+      font-weight: 500;
+    }
+
+    .vol-badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+    }
+
+    .vol-high {
+      background: #EAF3DE;
+      color: #3B6D11;
+    }
+
+    .vol-low {
+      background: #f1f0ec;
+      color: #5F5E5A;
+    }
+
+    .del-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--text3);
+      font-size: 14px;
+    }
+
+    .del-btn:hover {
+      color: var(--danger-text);
+    }
+
+    .inline-edit {
+      width: 100%;
+      padding: 4px;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--text);
+    }
+
+    .inline-edit:focus {
+      border-color: var(--border2);
+      background: var(--bg2);
+      outline: none;
+    }
+  </style>
 </head>
+
 <body>
 
-<div id="loadingTips" class="loading-overlay">正在讀取道具資料庫...</div>
+  <div id="loadingTips" class="loading-overlay">正在讀取道具資料庫...</div>
 
-<div class="app">
-  <div class="header">
-    <div>
-      <div class="title">⚔️ FF14 僱員市場分析</div>
-      <div class="subtitle">繁中版・巴哈姆特伺服器 · 資料來源：Universalis & Teamcraft</div>
+  <div class="app">
+    <div class="header">
+      <div>
+        <div class="title">⚔️ FF14 僱員市場分析</div>
+        <div class="subtitle">繁中版・巴哈姆特伺服器 · 資料來源：Universalis & Teamcraft</div>
+      </div>
+      <div class="header-right">
+        <button class="btn btn-primary" onclick="refreshAll()">↻ 更新市場價格</button>
+      </div>
     </div>
-    <div class="header-right">
-      <button class="btn btn-primary" onclick="refreshAll()">↻ 更新市場價格</button>
-    </div>
+
+    <div class="tabs" id="tabBar"></div>
+    <div id="tabContent"></div>
   </div>
 
-  <div class="tabs" id="tabBar"></div>
-  <div id="tabContent"></div>
-</div>
+  <script>
+    const REGION_URL = `https://universalis.app/api/v2/${encodeURIComponent('陸行鳥')}`;
+    const PATH_TW = './FFXIV/tw-items.json';
+    const PATH_EN = './FFXIV/items.json';
 
-<script>
-const SERVER = 4033; 
-const UNI = 'https://universalis.app/api/v2';
-const PATH_TW = './FFXIV/tw-items.json';
-const PATH_EN = './FFXIV/items.json';
+    // 固定僱員名單
+    const RETAINER_NAMES = ['隱翠', '庫姆', '雲形'];
 
-// 固定僱員名單
-const RETAINER_NAMES = ['隱翠', '庫姆', '雲形'];
+    let state = JSON.parse(localStorage.getItem('ff14_market_v3')) || {
+      retainers: RETAINER_NAMES.map(name => ({ name, items: [] })),
+      activeTab: 0,
+      customTranslations: {},
+      soldItems: [] // 新增初始化
+    };
+    state.soldItems = state.soldItems || []; // 確保升級後有此欄位
 
-let state = JSON.parse(localStorage.getItem('ff14_market_v3')) || {
-  retainers: RETAINER_NAMES.map(name => ({ name, items: [] })),
-  activeTab: 0,
-  customTranslations: {},
-  soldItems: [] // 新增初始化
-};
-state.soldItems = state.soldItems || []; // 確保升級後有此欄位
+    let itemDB = new Map(); // 格式: id -> { tw: "", en: "" }
+    let marketCache = {};
+    let searchTimer = null;
+    let activeSort = 'none'; // 'none', 'price', 'vol'
+    let sortDir = 1;
 
-let itemDB = new Map(); // 格式: id -> { tw: "", en: "" }
-let marketCache = {};
-let searchTimer = null;
-let activeSort = 'none'; // 'none', 'price', 'vol'
-let sortDir = 1;
+    // 初始化：載入 JSON 資料庫
+    async function initDB() {
+      const tips = document.getElementById('loadingTips');
+      tips.style.display = 'block';
+      try {
+        const [resTw, resEn] = await Promise.all([
+          fetch(PATH_TW).then(r => r.json()),
+          fetch(PATH_EN).then(r => r.json())
+        ]);
 
-// 初始化：載入 JSON 資料庫
-async function initDB() {
-  const tips = document.getElementById('loadingTips');
-  tips.style.display = 'block';
-  try {
-    const [resTw, resEn] = await Promise.all([
-      fetch(PATH_TW).then(r => r.json()),
-      fetch(PATH_EN).then(r => r.json())
-    ]);
+        // 先填入英文底稿
+        Object.keys(resEn).forEach(id => {
+          itemDB.set(id, { en: resEn[id].en, tw: null });
+        });
 
-    // 先填入英文底稿
-    Object.keys(resEn).forEach(id => {
-      itemDB.set(id, { en: resEn[id].en, tw: null });
-    });
+        // 覆蓋繁中名稱
+        Object.keys(resTw).forEach(id => {
+          if (itemDB.has(id)) {
+            itemDB.get(id).tw = resTw[id].tw;
+          } else {
+            itemDB.set(id, { en: null, tw: resTw[id].tw });
+          }
+        });
 
-    // 覆蓋繁中名稱
-    Object.keys(resTw).forEach(id => {
-      if(itemDB.has(id)) {
-        itemDB.get(id).tw = resTw[id].tw;
-      } else {
-        itemDB.set(id, { en: null, tw: resTw[id].tw });
+        console.log(`資料庫載入完成，共 ${itemDB.size} 筆道具`);
+      } catch (e) {
+      } finally {
+        tips.style.display = 'none';
+        render();
+        autoFetchVisible();
       }
-    });
-
-    console.log(`資料庫載入完成，共 ${itemDB.size} 筆道具`);
-  } catch (e) {
-  } finally {
-    tips.style.display = 'none';
-    render();
-    autoFetchVisible();
-  }
-}
-
-function save() {
-  localStorage.setItem('ff14_market_v3', JSON.stringify(state));
-}
-
-// ─── 搜尋邏輯 ───
-function onSearch(val) {
-  clearTimeout(searchTimer);
-  const dd = document.getElementById('dd');
-  if (!val.trim()) { dd.classList.remove('show'); return; }
-
-  searchTimer = setTimeout(() => {
-    const query = val.toLowerCase();
-    const results = [];
-    
-    for (let [id, names] of itemDB) {
-      const twName = state.customTranslations[id] || names.tw;
-      const enName = names.en || "";
-      
-      // 優先權：1. 繁中包含 2. 英文包含
-      if (twName && twName.toLowerCase().includes(query)) {
-        results.push({ id, name: twName, type: 'tw' });
-      } else if (enName && enName.toLowerCase().includes(query)) {
-        results.push({ id, name: enName, type: 'en' });
-      }
-      
-      if (results.length > 100) break; // 效能保護
     }
 
-    renderDropdown(results);
-  }, 200);
-}
+    function save() {
+      localStorage.setItem('ff14_market_v3', JSON.stringify(state));
+    }
 
-function renderDropdown(results) {
-  const dd = document.getElementById('dd');
-  if (results.length === 0) {
-    dd.innerHTML = '<div class="dd-item">找不到結果</div>';
-  } else {
-    dd.innerHTML = results.map(r => `
+    // ─── 搜尋邏輯 ───
+    function onSearch(val) {
+      clearTimeout(searchTimer);
+      const dd = document.getElementById('dd');
+      if (!val.trim()) { dd.classList.remove('show'); return; }
+
+      searchTimer = setTimeout(() => {
+        const query = val.toLowerCase();
+        const results = [];
+
+        for (let [id, names] of itemDB) {
+          const twName = state.customTranslations[id] || names.tw;
+          const enName = names.en || "";
+
+          // 優先權：1. 繁中包含 2. 英文包含
+          if (twName && twName.toLowerCase().includes(query)) {
+            results.push({ id, name: twName, type: 'tw' });
+          } else if (enName && enName.toLowerCase().includes(query)) {
+            results.push({ id, name: enName, type: 'en' });
+          }
+
+          if (results.length > 100) break; // 效能保護
+        }
+
+        renderDropdown(results);
+      }, 200);
+    }
+
+    function renderDropdown(results) {
+      const dd = document.getElementById('dd');
+      if (results.length === 0) {
+        dd.innerHTML = '<div class="dd-item">找不到結果</div>';
+      } else {
+        dd.innerHTML = results.map(r => `
       <div class="dd-item" onmousedown="addItem('${r.id}', '${r.name}', '${r.type}')">
         <span class="${r.type === 'en' ? 'dd-en' : ''}">
           ${r.name} ${r.type === 'en' ? '(EN-需翻譯)' : ''}
@@ -282,61 +417,61 @@ function renderDropdown(results) {
         <span class="dd-tag">#${r.id}</span>
       </div>
     `).join('');
-  }
-  dd.classList.add('show');
-}
+      }
+      dd.classList.add('show');
+    }
 
-// ─── 道具操作 ───
-function addItem(id, name, type) {
-  const r = state.retainers[state.activeTab];
-  if (r.items.some(it => it.id === id)) return;
+    // ─── 道具操作 ───
+    function addItem(id, name, type) {
+      const r = state.retainers[state.activeTab];
+      if (r.items.some(it => it.id === id)) return;
 
-  // 晚新增的在最上面 (unshift)
-  r.items.unshift({ id, name });
+      // 晚新增的在最上面 (unshift)
+      r.items.unshift({ id, name });
 
-  // 如果是從英文搜尋來的，自動加入自訂翻譯對象
-  if (type === 'en' && !state.customTranslations[id]) {
-    state.customTranslations[id] = name; 
-  }
+      // 如果是從英文搜尋來的，自動加入自訂翻譯對象
+      if (type === 'en' && !state.customTranslations[id]) {
+        state.customTranslations[id] = name;
+      }
 
-  save();
-  document.getElementById('searchInput').value = '';
-  fetchMarket([id]);
-  render();
-}
+      save();
+      document.getElementById('searchInput').value = '';
+      fetchMarket([id]);
+      render();
+    }
 
-function removeItem(id) {
-  const r = state.retainers[state.activeTab];
-  r.items = r.items.filter(it => it.id !== id);
-  save();
-  render();
-}
+    function removeItem(id) {
+      const r = state.retainers[state.activeTab];
+      r.items = r.items.filter(it => it.id !== id);
+      save();
+      render();
+    }
 
-function updateTranslation(id, newName) {
-  state.customTranslations[id] = newName;
-  save();
-  // 更新目前列表中的名稱顯示
-  state.retainers.forEach(r => {
-    r.items.forEach(it => { if(it.id === id) it.name = newName; });
-  });
-  render();
-}
+    function updateTranslation(id, newName) {
+      state.customTranslations[id] = newName;
+      save();
+      // 更新目前列表中的名稱顯示
+      state.retainers.forEach(r => {
+        r.items.forEach(it => { if (it.id === id) it.name = newName; });
+      });
+      render();
+    }
 
-// ─── 介面渲染 ───
-function render() {
-  renderTabs();
-  const content = document.getElementById('tabContent');
-  
-  if (state.activeTab === 'custom') {
-    renderCustomPage(content);
-    return;
-  }
+    // ─── 介面渲染 ───
+    function render() {
+      renderTabs();
+      const content = document.getElementById('tabContent');
 
-  const isSoldTab = state.activeTab === 'sold';
-  const items = isSoldTab ? state.soldItems : state.retainers[state.activeTab].items;
-  const displayItems = getSortedItems(items);
+      if (state.activeTab === 'custom') {
+        renderCustomPage(content);
+        return;
+      }
 
-  content.innerHTML = `
+      const isSoldTab = state.activeTab === 'sold';
+      const items = isSoldTab ? state.soldItems : state.retainers[state.activeTab].items;
+      const displayItems = getSortedItems(items);
+
+      content.innerHTML = `
     <div class="panel">
       <div class="search-row">
         <input type="text" id="searchInput" placeholder="搜尋繁中或英文道具名稱..." oninput="onSearch(this.value)" onblur="hideDD()">
@@ -365,24 +500,24 @@ function render() {
       ${items.length === 0 ? '<div style="text-align:center; padding:40px; color:#999;">尚未新增道具</div>' : ''}
     </div>
   `;
-}
+    }
 
-function renderRow(item, isSoldTab, index) {
-  // 如果是售出分頁，使用固化的靜態數據，否則使用動態快取
-  const p = isSoldTab ? item.soldPrice : (marketCache[item.id]?.price || 0);
-  const v = isSoldTab ? item.soldVol : (marketCache[item.id]?.vol || 0);
-  
-  const pStr = p > 0 ? `<span class="price-val">${p.toLocaleString()}</span>` : '<span style="color:#ccc">---</span>';
-  const vStr = `<span class="vol-badge ${v > 20 ? 'vol-high' : 'vol-low'}">${v}</span>`;
-  const displayName = state.customTranslations[item.id] || (itemDB.get(item.id)?.tw) || item.name;
+    function renderRow(item, isSoldTab, index) {
+      // 如果是售出分頁，使用固化的靜態數據，否則使用動態快取
+      const p = isSoldTab ? item.soldPrice : (marketCache[item.id]?.price || 0);
+      const v = isSoldTab ? item.soldVol : (marketCache[item.id]?.vol || 0);
 
-  return `
+      const pStr = p > 0 ? `<span class="price-val">${p.toLocaleString()}</span>` : '<span style="color:#ccc">---</span>';
+      const vStr = `<span class="vol-badge ${v > 20 ? 'vol-high' : 'vol-low'}">${v}</span>`;
+      const displayName = state.customTranslations[item.id] || (itemDB.get(item.id)?.tw) || item.name;
+
+      return `
     <tr>
       <td><div style="font-weight:500">${displayName}</div></td>
       <td class="r" style="font-size:11px; color:#aaa">${isSoldTab ? item.soldDate : item.id}</td> <td class="r">${pStr}</td>
       <td class="r">${vStr}</td>
       <td class="r">
-        ${isSoldTab 
+        ${isSoldTab
           ? `<button class="del-btn" onclick="restoreItem(${index})" title="復原至原僱員" style="margin-right:12px;">↶</button>`
           : `<button class="del-btn" onclick="sellItem('${item.id}')" title="移至售出" style="margin-right:12px;">⇄</button>`
         }
@@ -390,11 +525,11 @@ function renderRow(item, isSoldTab, index) {
       </td>
     </tr>
   `;
-}
+    }
 
-function renderCustomPage(container) {
-  const list = Object.entries(state.customTranslations);
-  container.innerHTML = `
+    function renderCustomPage(container) {
+      const list = Object.entries(state.customTranslations);
+      container.innerHTML = `
     <div class="panel">
       <h3>✦ 自訂翻譯名稱</h3>
       <p style="font-size:12px; color:var(--text2); margin-bottom:15px;">在此編輯從英文搜尋加入或想改名的道具，修改後搜尋與列表將同步更新。</p>
@@ -412,172 +547,176 @@ function renderCustomPage(container) {
       </table>
     </div>
   `;
-}
+    }
 
-function renderTabs() {
-  const tabs = state.retainers.map((r, i) => `
+    function renderTabs() {
+      const tabs = state.retainers.map((r, i) => `
     <div class="tab ${state.activeTab === i ? 'active' : ''}" onclick="switchTab(${i})">${r.name}</div>
   `).join('');
-  // 插入「售出」分頁
-  const soldTab = `<div class="tab ${state.activeTab === 'sold' ? 'active' : ''}" onclick="switchTab('sold')">售出</div>`;
-  const custom = `<div class="tab ${state.activeTab === 'custom' ? 'active' : ''}" onclick="switchTab('custom')" style="margin-left:auto">✦ 自訂</div>`;
-  document.getElementById('tabBar').innerHTML = tabs + soldTab + custom;
-}
+      // 插入「售出」分頁
+      const soldTab = `<div class="tab ${state.activeTab === 'sold' ? 'active' : ''}" onclick="switchTab('sold')">售出</div>`;
+      const custom = `<div class="tab ${state.activeTab === 'custom' ? 'active' : ''}" onclick="switchTab('custom')" style="margin-left:auto">✦ 自訂</div>`;
+      document.getElementById('tabBar').innerHTML = tabs + soldTab + custom;
+    }
 
-// ─── 排序與功能邏輯 ───
-function toggleSort(type) {
-  if (activeSort === type) {
-    sortDir *= -1;
-  } else {
-    activeSort = type;
-    sortDir = -1; // 預設大到小
-  }
-  render();
-}
-
-function getSortIcon(type) {
-  if (activeSort !== type) return '';
-  return sortDir === -1 ? '↓' : '↑';
-}
-
-function getSortedItems(items) {
-  // 如果是 none，直接回傳原始陣列（最晚新增的會在最上面）
-  if (activeSort === 'none') return items;
-  
-  return [...items].sort((a, b) => {
-    const ma = marketCache[a.id];
-    const mb = marketCache[b.id];
-    
-    // 處理 Loading 或資料缺失的情況，給予預設值以便排序
-    const valA = (ma && ma !== 'loading') ? (activeSort === 'price' ? ma.price : ma.vol) : (activeSort === 'price' ? Infinity : -1);
-    const valB = (mb && mb !== 'loading') ? (activeSort === 'price' ? mb.price : mb.vol) : (activeSort === 'price' ? Infinity : -1);
-    
-    return (valA - valB) * sortDir;
-  });
-}
-
-function resetSort() {
-  activeSort = 'none';
-  render(); // 僅重新渲染畫面
-}
-
-function switchTab(i) {
-  state.activeTab = i;
-  activeSort = 'none'; // 切換分頁自動回到預設排序
-  save();
-  render();
-}
-
-function hideDD() { setTimeout(() => document.getElementById('dd').classList.remove('show'), 200); }
-
-// ─── 市場資料獲取 (Universalis) ───
-async function fetchMarket(ids) {
-  if (!ids || !ids.length) return;
-  
-  // 將所有傳入的 ID 先標記為 loading 並更新畫面
-  ids.forEach(id => { marketCache[id] = 'loading'; });
-  render();
-
-  // 每 20 筆一組
-  const chunkSize = 20;
-  for (let i = 0; i < ids.length; i += chunkSize) {
-    const chunk = ids.slice(i, i + chunkSize);
-    
-    try {
-      const res = await fetch(`${UNI}/${SERVER}/${chunk.join(',')}?entriesWithin=604800`);
-      const data = await res.json();
-      
-const updateCache = (id, info) => {
-      const history = info.recentHistory || [];
-      // 計算 7 天總成交金額與總數量
-      const totals = history.reduce((acc, h) => {
-        acc.totalGil += (h.pricePerUnit * h.quantity);
-        acc.totalQty += h.quantity;
-        return acc;
-      }, { totalGil: 0, totalQty: 0 });
-
-      const vol = totals.totalQty;
-      // 計算平均單價 (若無成交量則為 0)
-      const avgPrice = vol > 0 ? Math.round(totals.totalGil / vol) : 0;
-      
-      marketCache[id] = { 
-        price: avgPrice, // 用平均價取代原本的最便宜單價
-        vol: vol 
-      };
-    };
-
-      if (chunk.length === 1) {
-        updateCache(chunk[0], data);
+    // ─── 排序與功能邏輯 ───
+    function toggleSort(type) {
+      if (activeSort === type) {
+        sortDir *= -1;
       } else {
-        const itemsData = data.items || {};
-        chunk.forEach(id => updateCache(id, itemsData[id]));
+        activeSort = type;
+        sortDir = -1; // 預設大到小
       }
-    } catch (e) {
-      console.error("分組更新失敗", e);
-      chunk.forEach(id => { marketCache[id] = { price: 0, vol: 0 }; });
+      render();
     }
 
-    // 更新當前進度到畫面上
-    render();
-
-    // 如果還有下一組，就等待 1 秒再繼續
-    if (i + chunkSize < ids.length) {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+    function getSortIcon(type) {
+      if (activeSort !== type) return '';
+      return sortDir === -1 ? '↓' : '↑';
     }
-  }
-}
 
-function autoFetchVisible() {
-  const allIds = state.retainers.flatMap(r => r.items.map(it => it.id));
-  if (allIds.length) fetchMarket(allIds);
-}
+    function getSortedItems(items) {
+      // 如果是 none，直接回傳原始陣列（最晚新增的會在最上面）
+      if (activeSort === 'none') return items;
 
-function refreshAll() {
-  // 提取所有僱員分頁中的所有道具 ID (去重複)
-  const allIds = [...new Set(state.retainers.flatMap(r => r.items.map(it => it.id)))];
-  
-  if (allIds.length === 0) return;
-  
-  // 清空快取並啟動分組排隊更新
-  marketCache = {};
-  fetchMarket(allIds);
-}
+      return [...items].sort((a, b) => {
+        const ma = marketCache[a.id];
+        const mb = marketCache[b.id];
 
-// 啟動
-initDB();
+        // 處理 Loading 或資料缺失的情況，給予預設值以便排序
+        const valA = (ma && ma !== 'loading') ? (activeSort === 'price' ? ma.price : ma.vol) : (activeSort === 'price' ? Infinity : -1);
+        const valB = (mb && mb !== 'loading') ? (activeSort === 'price' ? mb.price : mb.vol) : (activeSort === 'price' ? Infinity : -1);
 
-function sellItem(id) {
-  const r = state.retainers[state.activeTab];
-  const itemIndex = r.items.findIndex(it => it.id === id);
-  const item = r.items[itemIndex];
-  const m = marketCache[id] || {};
+        return (valA - valB) * sortDir;
+      });
+    }
 
-const soldData = {
-    ...item,
-    soldPrice: (m && m.price) ? m.price : '---',
-    soldVol: (m && m.vol !== undefined) ? m.vol : '---',
-    fromRetainer: state.activeTab,
-    soldDate: new Date().toLocaleDateString('zh-TW')
-  };
+    function resetSort() {
+      activeSort = 'none';
+      render(); // 僅重新渲染畫面
+    }
 
-  state.soldItems.unshift(soldData);
-  r.items.splice(itemIndex, 1);
-  save();
-  render();
-}
+    function switchTab(i) {
+      state.activeTab = i;
+      activeSort = 'none'; // 切換分頁自動回到預設排序
+      save();
+      render();
+    }
 
-function restoreItem(soldIndex) {
-  const item = state.soldItems[soldIndex];
-  const targetIndex = item.fromRetainer;
-  
-  state.retainers[targetIndex].items.unshift({ id: item.id, name: item.name });
-  state.soldItems.splice(soldIndex, 1);
-  
-  save();
-  fetchMarket([item.id]); 
-  render();
-}
+    function hideDD() { setTimeout(() => document.getElementById('dd').classList.remove('show'), 200); }
 
-</script>
+    // ─── 市場資料獲取 (Universalis) ───
+    async function fetchMarket(ids) {
+      if (!ids || !ids.length) return;
+
+      // 將所有傳入的 ID 先標記為 loading 並更新畫面
+      ids.forEach(id => { marketCache[id] = 'loading'; });
+      render();
+
+      // 每 20 筆一組
+      const chunkSize = 20;
+      for (let i = 0; i < ids.length; i += chunkSize) {
+        const chunk = ids.slice(i, i + chunkSize);
+
+        try {
+
+          // 在 fetchMarket 函式的迴圈內替換為：
+          const res = await fetch(`${REGION_URL}/${chunk.join(',')}?entriesWithin=604800`);
+          const data = await res.json();
+
+          const updateCache = (id, info) => {
+            const history = info.recentHistory || [];
+
+            // 計算全大區總成交額與總數量
+            const totals = history.reduce((acc, h) => {
+              acc.totalGil += (h.pricePerUnit * h.quantity);
+              acc.totalQty += h.quantity;
+              return acc;
+            }, { totalGil: 0, totalQty: 0 });
+
+            const vol = totals.totalQty;
+            // 計算全大區平均單價，若無成交則為 0
+            const avgPrice = vol > 0 ? Math.round(totals.totalGil / vol) : 0;
+
+            marketCache[id] = {
+              price: avgPrice, // 此處的 price 現在代表全大區平均價
+              vol: vol         // 此處的 vol 現在代表全大區總成交量
+            };
+          };
+
+          if (chunk.length === 1) {
+            updateCache(chunk[0], data);
+          } else {
+            const itemsData = data.items || {};
+            chunk.forEach(id => updateCache(id, itemsData[id]));
+          }
+        } catch (e) {
+          console.error("分組更新失敗", e);
+          chunk.forEach(id => { marketCache[id] = { price: 0, vol: 0 }; });
+        }
+
+        // 更新當前進度到畫面上
+        render();
+
+        // 如果還有下一組，就等待 1 秒再繼續
+        if (i + chunkSize < ids.length) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+
+    function autoFetchVisible() {
+      const allIds = state.retainers.flatMap(r => r.items.map(it => it.id));
+      if (allIds.length) fetchMarket(allIds);
+    }
+
+    function refreshAll() {
+      // 提取所有僱員分頁中的所有道具 ID (去重複)
+      const allIds = [...new Set(state.retainers.flatMap(r => r.items.map(it => it.id)))];
+
+      if (allIds.length === 0) return;
+
+      // 清空快取並啟動分組排隊更新
+      marketCache = {};
+      fetchMarket(allIds);
+    }
+
+    // 啟動
+    initDB();
+
+    function sellItem(id) {
+      const r = state.retainers[state.activeTab];
+      const itemIndex = r.items.findIndex(it => it.id === id);
+      const item = r.items[itemIndex];
+      const m = marketCache[id] || {};
+
+      const soldData = {
+        ...item,
+        soldPrice: (m && m.price) ? m.price : '---',
+        soldVol: (m && m.vol !== undefined) ? m.vol : '---',
+        fromRetainer: state.activeTab,
+        soldDate: new Date().toLocaleDateString('zh-TW')
+      };
+
+      state.soldItems.unshift(soldData);
+      r.items.splice(itemIndex, 1);
+      save();
+      render();
+    }
+
+    function restoreItem(soldIndex) {
+      const item = state.soldItems[soldIndex];
+      const targetIndex = item.fromRetainer;
+
+      state.retainers[targetIndex].items.unshift({ id: item.id, name: item.name });
+      state.soldItems.splice(soldIndex, 1);
+
+      save();
+      fetchMarket([item.id]);
+      render();
+    }
+
+  </script>
 </body>
+
 </html>
