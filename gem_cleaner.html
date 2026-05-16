@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <title>FF14 魔晶石資產清理助手</title>
+  <style>
+    :root {
+      --bg: #f5f6f8;
+      --panel-bg: #ffffff;
+      --border: #eef0f2;
+      --text1: #2c3e50;
+      --text2: #34495e;
+      --text3: #7f8c8d;
+      --primary: #3498db;
+      --primary-hover: #2980b9;
+      --badge-high: #e8f8f5;
+      --text-high: #1abc9c;
+      --badge-low: #fdf2e9;
+      --text-low: #e67e22;
+      --alert-bg: #fdedec; /* 虧損或無流通時的紅色斑馬紋背景 */
+      --alert-text: #c0392b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; bg: var(--bg); color: var(--text1); padding: 20px; background-color: var(--bg); }
+    .container { max-width: 1000px; margin: 0 auto; }
+    
+    header { margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+    h2 { color: var(--text1); font-weight: 600; }
+    
+    .panel { background: var(--panel-bg); border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.02); padding: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+    
+    /* 篩選器工具列 */
+    .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+    .filter-btn { padding: 6px 12px; border: 1px solid var(--border); background: #fff; border-radius: 20px; color: var(--text2); font-size: 13px; cursor: pointer; transition: all 0.2s; }
+    .filter-btn:hover { border-color: var(--primary); color: var(--primary); }
+    .filter-btn.active { background: var(--primary); color: #fff; border-color: var(--primary); }
+
+    /* 排序工具列 */
+    .sort-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 15px; font-size: 13px; color: var(--text3); }
+    .sort-btn { padding: 5px 12px; border: 1px solid var(--border); background: #fff; border-radius: 6px; cursor: pointer; font-size: 13px; color: var(--text2); display: flex; align-items: center; gap: 4px; }
+    .sort-btn.active { border-color: var(--primary); color: var(--primary); font-weight: 500; }
+
+    /* 表格樣式 */
+    .item-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+    .item-table th, .item-table td { padding: 12px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .item-table th { color: var(--text3); font-weight: 500; font-size: 13px; background: #fafbfc; }
+    .r { text-align: right; }
+    
+    /* 數據行高亮與徽章 */
+    tr.alert-row { background-color: var(--alert-bg) !important; color: var(--alert-text); }
+    .price-val { font-weight: 600; font-family: monospace; font-size: 15px; }
+    tr.alert-row .price-val { color: var(--alert-text); }
+    
+    .vol-badge { padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: 600; display: inline-block; font-family: monospace; }
+    .vol-high { background: var(--badge-high); color: var(--text-high); }
+    .vol-low { background: var(--badge-low); color: var(--text-low); }
+    tr.alert-row .vol-badge { background: #fce4d6; color: var(--alert-text); }
+
+    /* 佇列進度條 */
+    .progress-container { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 8px; }
+    .spinner { width: 12px; height: 12px; border: 2px solid #ccc; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <header>
+    <h2>🔮 魔晶石資產清理助手 (繁中全區)</h2>
+    <div class="progress-container" id="progressInfo">
+      <span class="spinner" id="progressSpinner" style="display:none;"></span>
+      <span id="progressText">正在載入資料庫...</span>
+    </div>
+  </header>
+
+  <div class="panel">
+    <div class="filter-bar" id="filterBar">
+      <button class="filter-btn active" onclick="setFilter('全部')">全部</button>
+      </div>
+
+    <div class="sort-bar">
+      <span>排序：</span>
+      <button class="sort-btn" id="sort_price" onclick="toggleSort('price')">全區平均單價 ↕</button>
+      <button class="sort-btn" id="sort_vol" onclick="toggleSort('vol')">7日全區成交量 ↕</button>
+      <button class="sort-btn active" id="sort_none" onclick="toggleSort('none')">取消排序</button>
+    </div>
+
+    <table class="item-table">
+      <thead>
+        <tr>
+          <th>魔晶石名稱</th>
+          <th class="r">道具 ID</th>
+          <th class="r">NPC 收購價</th>
+          <th class="r">全區平均單價 (7日)</th>
+          <th class="r">7日全區成交量</th>
+        </tr>
+      </thead>
+      <tbody id="itemTableBody">
+        <tr><td colspan="5" style="text-align:center; padding: 40px; color:#999;">等待載入 mate_db.json...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // 1. 靜態價格對照表 (完全符合你提供的手動校正價格)
+  const MAT_PRICES = {
+    '壹型': 30,  '貳型': 60,  '參型': 90,  '肆型': 99,
+    '伍型': 119, '陸型': 139, '柒型': 159, '捌型': 167,
+    '玖型': 217, '拾型': 217, '拾壹型': 217, '拾貳型': 217
+  };
+
+  // 2. 繁中大區（陸行鳥）URL 編碼字串
+  const REGION_URL = `https://universalis.app/api/v2/${encodeURIComponent('陸行鳥')}`;
+
+  // 3. 全域狀態管理
+  let gemDatabase = [];   // 存放從 mate_db.json 讀進來的 156 筆原始資料
+  let marketCache = {};   // 存放動態抓到的全區行情 { id: { price, vol } }
+  let activeFilter = '全部'; 
+  let activeSort = 'none'; // 'price', 'vol', 'none'
+  let sortDirection = 1;   // 1 為正序, -1 為倒序
+
+  // 4. 初始化：建立篩選按鈕並讀取本地 JSON
+  document.addEventListener('DOMContentLoaded', () => {
+    renderFilterButtons();
+    initDatabase();
+  });
+
+  function renderFilterButtons() {
+    const bar = document.getElementById('filterBar');
+    Object.keys(MAT_PRICES).forEach(type => {
+      bar.innerHTML += `<button class="filter-btn" id="btn_${type}" onclick="setFilter('${type}')">${type}</button>`;
+    });
+  }
+
+  async function initDatabase() {
+    try {
+      const response = await fetch('./FFXIV/mate_db.json');
+      const data = await response.json();
+      
+      // 將原始物件結構轉為更好處理的陣列，並透過名稱自動綁定 NPC 價格
+      gemDatabase = Object.entries(data).map(([id, info]) => {
+        return {
+          id: id,
+          name: info.tw,
+          npcPrice: getNpcPrice(info.tw)
+        };
+      });
+
+      document.getElementById('progressText').innerText = '資料庫載入完成，開始排隊向 Universalis 查詢行情...';
+      render();
+      startFetchQueue();
+    } catch (err) {
+      document.getElementById('progressText').innerText = '讀取 mate_db.json 失敗，請確認檔案位置是否正確。';
+      console.error(err);
+    }
+  }
+
+  // 5. 依據名稱尾巴自動對照收購價的純函式
+  function getNpcPrice(itemName) {
+    for (const [type, price] of Object.entries(MAT_PRICES)) {
+      if (itemName.endsWith(type)) return price;
+    }
+    return 0;
+  }
+
+  // 6. 排隊分組抓取邏輯 (每秒抓一組，每組最多20個道具)
+  async function startFetchQueue() {
+    const ids = gemDatabase.map(g => g.id);
+    const chunks = [];
+    for (let i = 0; i < ids.length; i += 20) {
+      chunks.push(ids.slice(i, i + 20));
+    }
+
+    const spinner = document.getElementById('progressSpinner');
+    spinner.style.display = 'inline-block';
+
+    for (let i = 0; i < chunks.length; i++) {
+      const chunk = chunks[i];
+      document.getElementById('progressText').innerText = `正在查詢市場行情 (進度: ${i + 1}/${chunks.length} 組)...`;
+      
+      try {
+        const res = await fetch(`${REGION_URL}/${chunk.join(',')}?entriesWithin=604800`);
+        const data = await res.json();
+        
+        // 分組解析回傳內容
+        chunk.forEach(id => {
+          const info = chunk.length === 1 ? data : (data.items ? data.items[id] : data[id]);
+          if (info) {
+            const history = info.recentHistory || [];
+            // 計算加權總額與總成交量
+            const totals = history.reduce((acc, h) => {
+              acc.totalGil += (h.pricePerUnit * h.quantity);
+              acc.totalQty += h.quantity;
+              return acc;
+            }, { totalGil: 0, totalQty: 0 });
+
+            const vol = totals.totalQty;
+            const avgPrice = vol > 0 ? Math.round(totals.totalGil / vol) : 0;
+
+            marketCache[id] = { price: avgPrice, vol: vol };
+          }
+        });
+        
+        render(); // 每過完一水資料就重新刷一次介面
+      } catch (e) {
+        console.error(`群組 ${i} 行情抓取失敗:`, e);
+      }
+      
+      // 等待 1 秒再衝下一組，保護 API 也不會讓網頁卡頓
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
+
+    spinner.style.display = 'none';
+    document.getElementById('progressText').innerText = '全區 7 日行情更新完畢 (靜態緩存中)';
+  }
+
+  // 7. 切換篩選器邏輯
+  function setFilter(type) {
+    activeFilter = type;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if (type === '全部') {
+      document.querySelector('.filter-bar .filter-btn').classList.add('active');
+    } else {
+      document.getElementById(`btn_${type}`).classList.add('active');
+    }
+    render();
+  }
+
+  // 8. 排序控制邏輯
+  function toggleSort(type) {
+    if (type === 'none') {
+      activeSort = 'none';
+    } else {
+      if (activeSort === type) {
+        sortDirection = -sortDirection; // 同欄位連點：切換正倒序
+      } else {
+        activeSort = type;
+        sortDirection = -1; // 首次點擊預設從高到低排
+      }
+    }
+
+    // 更新排序按鈕的視覺外觀
+    document.querySelectorAll('.sort-bar .sort-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(`sort_${type}`).classList.add('active');
+    
+    // 更新箭頭視覺符號
+    const arrow = sortDirection === 1 ? '▲' : '▼';
+    document.getElementById('sort_price').innerText = `全區平均單價 ${activeSort === 'price' ? arrow : '↕'}`;
+    document.getElementById('sort_vol').innerText = `7日全區成交量 ${activeSort === 'vol' ? arrow : '↕'}`;
+
+    render();
+  }
+
+  // 9. 核心表格渲染與紅色高亮判定
+  function render() {
+    const tbody = document.getElementById('itemTableBody');
+    
+    // 步驟 A: 型號過濾
+    let displayList = gemDatabase.filter(item => {
+      if (activeFilter === '全部') return true;
+      return item.name.endsWith(activeFilter);
+    });
+
+    // 步驟 B: 市場數據排序
+    if (activeSort === 'price') {
+      displayList.sort((a, b) => {
+        const pA = marketCache[a.id]?.price || 0;
+        const pB = marketCache[b.id]?.price || 0;
+        return (pA - pB) * sortDirection;
+      });
+    } else if (activeSort === 'vol') {
+      displayList.sort((a, b) => {
+        const vA = marketCache[a.id]?.vol || 0;
+        const vB = marketCache[b.id]?.vol || 0;
+        return (vA - vB) * sortDirection;
+      });
+    }
+
+    // 步驟 C: 產生 HTML 每一列
+    tbody.innerHTML = displayList.map(item => {
+      const cache = marketCache[item.id];
+      const hasData = cache !== undefined;
+      
+      const p = hasData ? cache.price : 0;
+      const v = hasData ? cache.vol : 0;
+      
+      // 關鍵判定邏輯：扣除 5% 稅金後的市場淨利
+      const marketNet = p * 0.95;
+      
+      // 亮紅燈條件：1.已載入市場行情 2.市場淨利比NPC收購價還低，或者全區 7 天根本零成交
+      const isLoss = hasData && (marketNet <= item.npcPrice || v === 0);
+      const rowClass = isLoss ? 'alert-row' : '';
+
+      // 字串格式化呈現
+      const pStr = hasData 
+        ? (p > 0 ? `<span class="price-val">${p.toLocaleString()}</span>` : '<span style="color:#aaa">0</span>') 
+        : '<span style="color:#ccc; font-size:12px;">Loading...</span>';
+        
+      const vStr = hasData 
+        ? `<span class="vol-badge ${v > 50 ? 'vol-high' : 'vol-low'}">${v}</span>` 
+        : '<span style="color:#ccc; font-size:12px;">Loading...</span>';
+
+      return `
+        <tr class="${rowClass}">
+          <td><div style="font-weight:500;">${item.name}</div></td>
+          <td class="r" style="font-size:12px; color:#999; font-family:monospace;">#${item.id}</td>
+          <td class="r" style="font-weight:500; font-family:monospace;">${item.npcPrice}</td>
+          <td class="r">${pStr}</td>
+          <td class="r">${vStr}</td>
+        </tr>
+      `;
+    }).join('');
+
+    if (displayList.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color:#999;">此型號下無符合條件的魔晶石</td></tr>`;
+    }
+  }
+</script>
+
+</body>
+</html>
