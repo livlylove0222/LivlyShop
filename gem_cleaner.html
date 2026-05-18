@@ -154,7 +154,7 @@
   // 讀取本地 JSON 並自動動態分析「種類」
   async function initDatabase() {
     try {
-      const response = await fetch('mate_db.json');
+      const response = await fetch('./FFXIV/mate_db.json');
       const data = await response.json();
       
       const detectedClasses = new Set();
