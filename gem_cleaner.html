@@ -2,6 +2,8 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="/LivlyShop/favicon.ico">
   <title>FF14 魔晶石資產清理助手</title>
   <style>
     :root {
@@ -61,13 +63,17 @@
     .progress-container { font-size: 12px; color: var(--text3); display: flex; align-items: center; gap: 8px; }
     .spinner { width: 12px; height: 12px; border: 2px solid #ccc; border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; display: inline-block; }
     @keyframes spin { to { transform: rotate(360deg); } }
+    
+  .filter-label { font-size: 12px; color: var(--text3); font-weight: 600; margin-bottom: 6px; }
+  .filter-bar { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 10px; border-bottom: 1px dashed var(--border); }
+  #typeFilterBar { border-bottom: 1px solid var(--border); padding-bottom: 15px; }
   </style>
 </head>
 <body>
 
 <div class="container">
   <header>
-    <h2>🔮 魔晶石資產清理助手 (繁中全區)</h2>
+    <h2>🔮 魔晶石價值</h2>
     <div class="progress-container" id="progressInfo">
       <span class="spinner" id="progressSpinner" style="display:none;"></span>
       <span id="progressText">正在載入資料庫...</span>
@@ -75,11 +81,17 @@
   </header>
 
   <div class="panel">
-    <div class="filter-bar" id="filterBar">
-      <button class="filter-btn active" onclick="setFilter('全部')">全部</button>
-      </div>
+    <div class="filter-label">種類篩選：</div>
+    <div class="filter-bar" id="classFilterBar">
+      <button class="filter-btn active" id="class_btn_all" onclick="clearClassFilter()">全部種類</button>
+    </div>
 
-    <div class="sort-bar">
+    <div class="filter-label" style="margin-top: 10px;">型號篩選：</div>
+    <div class="filter-bar" id="typeFilterBar">
+      <button class="filter-btn active" id="type_btn_all" onclick="clearTypeFilter()">全部型號</button>
+    </div>
+
+    <div class="sort-bar" style="margin-top: 20px;">
       <span>排序：</span>
       <button class="sort-btn" id="sort_price" onclick="toggleSort('price')">全區平均單價 ↕</button>
       <button class="sort-btn" id="sort_vol" onclick="toggleSort('vol')">7日全區成交量 ↕</button>
@@ -90,10 +102,10 @@
       <thead>
         <tr>
           <th>魔晶石名稱</th>
-          <th class="r">道具 ID</th>
-          <th class="r">NPC 收購價</th>
-          <th class="r">全區平均單價 (7日)</th>
-          <th class="r">7日全區成交量</th>
+          <th class="r">ID</th>
+          <th class="r">收購價</th>
+          <th class="r">平均單價 (7日)</th>
+          <th class="r">成交量</th>
         </tr>
       </thead>
       <tbody id="itemTableBody">
@@ -104,60 +116,77 @@
 </div>
 
 <script>
-  // 1. 靜態價格對照表 (完全符合你提供的手動校正價格)
+  // 1. 靜態價格對照表
   const MAT_PRICES = {
     '壹型': 30,  '貳型': 60,  '參型': 90,  '肆型': 99,
     '伍型': 119, '陸型': 139, '柒型': 159, '捌型': 167,
     '玖型': 217, '拾型': 217, '拾壹型': 217, '拾貳型': 217
   };
 
-  // 2. 繁中大區（陸行鳥）URL 編碼字串
+  // 2. 繁中大區（陸行鳥）URL
   const REGION_URL = `https://universalis.app/api/v2/${encodeURIComponent('陸行鳥')}`;
 
   // 3. 全域狀態管理
-  let gemDatabase = [];   // 存放從 mate_db.json 讀進來的 156 筆原始資料
-  let marketCache = {};   // 存放動態抓到的全區行情 { id: { price, vol } }
-  let activeFilter = '全部'; 
-  let activeSort = 'none'; // 'price', 'vol', 'none'
-  let sortDirection = 1;   // 1 為正序, -1 為倒序
+  let gemDatabase = [];   
+  let marketCache = {};   
+  
+  // 複選狀態管理 (使用 Set 方便處理新增與刪除)
+  let selectedClasses = new Set(); // 存放勾選的種類，如 ['武略', '雄略']
+  let selectedTypes = new Set();   // 存放勾選的型號，如 ['拾型', '拾貳型']
+  
+  let activeSort = 'none'; 
+  let sortDirection = 1;   
 
-  // 4. 初始化：建立篩選按鈕並讀取本地 JSON
+  // 4. 初始化
   document.addEventListener('DOMContentLoaded', () => {
-    renderFilterButtons();
+    renderTypeFilterButtons();
     initDatabase();
   });
 
-  function renderFilterButtons() {
-    const bar = document.getElementById('filterBar');
+  // 渲染型號按鈕 (第二排)
+  function renderTypeFilterButtons() {
+    const bar = document.getElementById('typeFilterBar');
     Object.keys(MAT_PRICES).forEach(type => {
-      bar.innerHTML += `<button class="filter-btn" id="btn_${type}" onclick="setFilter('${type}')">${type}</button>`;
+      bar.innerHTML += `<button class="filter-btn" id="type_btn_${type}" onclick="toggleTypeFilter('${type}')">${type}</button>`;
     });
   }
 
+  // 讀取本地 JSON 並自動動態分析「種類」
   async function initDatabase() {
     try {
-      const response = await fetch('./FFXIV/mate_db.json');
+      const response = await fetch('mate_db.json');
       const data = await response.json();
       
-      // 將原始物件結構轉為更好處理的陣列，並透過名稱自動綁定 NPC 價格
+      const detectedClasses = new Set();
+
       gemDatabase = Object.entries(data).map(([id, info]) => {
+        // 從名稱中分離出種類（例如從 "武略魔晶石參型" 抓取 "武略"）
+        const className = info.tw.split('魔晶石')[0];
+        if (className) detectedClasses.add(className);
+
         return {
           id: id,
           name: info.tw,
+          className: className,
           npcPrice: getNpcPrice(info.tw)
         };
+      });
+
+      // 根據偵測到的種類，動態動生第一排按鈕
+      const classBar = document.getElementById('classFilterBar');
+      Array.from(detectedClasses).sort().forEach(className => {
+        classBar.innerHTML += `<button class="filter-btn" id="class_btn_${className}" onclick="toggleClassFilter('${className}')">${className}</button>`;
       });
 
       document.getElementById('progressText').innerText = '資料庫載入完成，開始排隊向 Universalis 查詢行情...';
       render();
       startFetchQueue();
     } catch (err) {
-      document.getElementById('progressText').innerText = '讀取 mate_db.json 失敗，請確認檔案位置是否正確。';
+      document.getElementById('progressText').innerText = '讀取 mate_db.json 失敗。';
       console.error(err);
     }
   }
 
-  // 5. 依據名稱尾巴自動對照收購價的純函式
   function getNpcPrice(itemName) {
     for (const [type, price] of Object.entries(MAT_PRICES)) {
       if (itemName.endsWith(type)) return price;
@@ -165,7 +194,57 @@
     return 0;
   }
 
-  // 6. 排隊分組抓取邏輯 (每秒抓一組，每組最多20個道具)
+  // 5. 核心複選邏輯控制
+  function toggleClassFilter(className) {
+    if (selectedClasses.has(className)) {
+      selectedClasses.delete(className);
+      document.getElementById(`class_btn_${className}`).classList.remove('active');
+    } else {
+      selectedClasses.add(className);
+      document.getElementById(`class_btn_${className}`).classList.add('active');
+    }
+    
+    // 如果有選任何種類，把 "全部種類" 取消高亮；反之則亮起
+    if (selectedClasses.size > 0) {
+      document.getElementById('class_btn_all').classList.remove('active');
+    } else {
+      document.getElementById('class_btn_all').classList.add('active');
+    }
+    render();
+  }
+
+  function clearClassFilter() {
+    selectedClasses.clear();
+    document.querySelectorAll('#classFilterBar .filter-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('class_btn_all').classList.add('active');
+    render();
+  }
+
+  function toggleTypeFilter(type) {
+    if (selectedTypes.has(type)) {
+      selectedTypes.delete(type);
+      document.getElementById(`type_btn_${type}`).classList.remove('active');
+    } else {
+      selectedTypes.add(type);
+      document.getElementById(`type_btn_${type}`).classList.add('active');
+    }
+    
+    if (selectedTypes.size > 0) {
+      document.getElementById('type_btn_all').classList.remove('active');
+    } else {
+      document.getElementById('type_btn_all').classList.add('active');
+    }
+    render();
+  }
+
+  function clearTypeFilter() {
+    selectedTypes.clear();
+    document.querySelectorAll('#typeFilterBar .filter-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById('type_btn_all').classList.add('active');
+    render();
+  }
+
+  // 6. 排序與佇列抓取 (維持原大區設計)
   async function startFetchQueue() {
     const ids = gemDatabase.map(g => g.id);
     const chunks = [];
@@ -184,12 +263,10 @@
         const res = await fetch(`${REGION_URL}/${chunk.join(',')}?entriesWithin=604800`);
         const data = await res.json();
         
-        // 分組解析回傳內容
         chunk.forEach(id => {
           const info = chunk.length === 1 ? data : (data.items ? data.items[id] : data[id]);
           if (info) {
             const history = info.recentHistory || [];
-            // 計算加權總額與總成交量
             const totals = history.reduce((acc, h) => {
               acc.totalGil += (h.pricePerUnit * h.quantity);
               acc.totalQty += h.quantity;
@@ -198,102 +275,78 @@
 
             const vol = totals.totalQty;
             const avgPrice = vol > 0 ? Math.round(totals.totalGil / vol) : 0;
-
             marketCache[id] = { price: avgPrice, vol: vol };
           }
         });
-        
-        render(); // 每過完一水資料就重新刷一次介面
+        render(); 
       } catch (e) {
-        console.error(`群組 ${i} 行情抓取失敗:`, e);
+        console.error(e);
       }
-      
-      // 等待 1 秒再衝下一組，保護 API 也不會讓網頁卡頓
       await new Promise(resolve => setTimeout(resolve, 1000));
     }
-
+    spinner.style.animation = 'none';
     spinner.style.display = 'none';
     document.getElementById('progressText').innerText = '全區 7 日行情更新完畢 (靜態緩存中)';
   }
 
-  // 7. 切換篩選器邏輯
-  function setFilter(type) {
-    activeFilter = type;
-    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-    if (type === '全部') {
-      document.querySelector('.filter-bar .filter-btn').classList.add('active');
-    } else {
-      document.getElementById(`btn_${type}`).classList.add('active');
-    }
-    render();
-  }
-
-  // 8. 排序控制邏輯
   function toggleSort(type) {
     if (type === 'none') {
       activeSort = 'none';
     } else {
       if (activeSort === type) {
-        sortDirection = -sortDirection; // 同欄位連點：切換正倒序
+        sortDirection = -sortDirection;
       } else {
         activeSort = type;
-        sortDirection = -1; // 首次點擊預設從高到低排
+        sortDirection = -1;
       }
     }
-
-    // 更新排序按鈕的視覺外觀
     document.querySelectorAll('.sort-bar .sort-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(`sort_${type}`).classList.add('active');
-    
-    // 更新箭頭視覺符號
     const arrow = sortDirection === 1 ? '▲' : '▼';
     document.getElementById('sort_price').innerText = `全區平均單價 ${activeSort === 'price' ? arrow : '↕'}`;
     document.getElementById('sort_vol').innerText = `7日全區成交量 ${activeSort === 'vol' ? arrow : '↕'}`;
-
     render();
   }
 
-  // 9. 核心表格渲染與紅色高亮判定
+  // 7. 核心表格渲染：多重交集過濾
   function render() {
     const tbody = document.getElementById('itemTableBody');
     
-    // 步驟 A: 型號過濾
+    // 多重交集過濾
     let displayList = gemDatabase.filter(item => {
-      if (activeFilter === '全部') return true;
-      return item.name.endsWith(activeFilter);
+      // 條件 1: 種類過濾 (選中的種類必須包含該項目的 className，若沒選則預設全過)
+      const matchClass = selectedClasses.size === 0 || selectedClasses.has(item.className);
+      
+      // 條件 2: 型號過濾
+      let matchType = selectedTypes.size === 0;
+      if (!matchType) {
+        for (const type of selectedTypes) {
+          if (item.name.endsWith(type)) {
+            matchType = true;
+            break;
+          }
+        }
+      }
+      
+      return matchClass && matchType;
     });
 
-    // 步驟 B: 市場數據排序
+    // 排序
     if (activeSort === 'price') {
-      displayList.sort((a, b) => {
-        const pA = marketCache[a.id]?.price || 0;
-        const pB = marketCache[b.id]?.price || 0;
-        return (pA - pB) * sortDirection;
-      });
+      displayList.sort((a, b) => ( (marketCache[a.id]?.price || 0) - (marketCache[b.id]?.price || 0) ) * sortDirection);
     } else if (activeSort === 'vol') {
-      displayList.sort((a, b) => {
-        const vA = marketCache[a.id]?.vol || 0;
-        const vB = marketCache[b.id]?.vol || 0;
-        return (vA - vB) * sortDirection;
-      });
+      displayList.sort((a, b) => ( (marketCache[a.id]?.vol || 0) - (marketCache[b.id]?.vol || 0) ) * sortDirection);
     }
 
-    // 步驟 C: 產生 HTML 每一列
+    // 渲染資料行
     tbody.innerHTML = displayList.map(item => {
       const cache = marketCache[item.id];
       const hasData = cache !== undefined;
-      
       const p = hasData ? cache.price : 0;
       const v = hasData ? cache.vol : 0;
       
-      // 關鍵判定邏輯：扣除 5% 稅金後的市場淨利
-      const marketNet = p * 0.95;
-      
-      // 亮紅燈條件：1.已載入市場行情 2.市場淨利比NPC收購價還低，或者全區 7 天根本零成交
-      const isLoss = hasData && (marketNet <= item.npcPrice || v === 0);
-      const rowClass = isLoss ? 'alert-row' : '';
+      const isLoss = hasData && ((p * 0.95) <= item.npcPrice || v === 0);
 
-      // 字串格式化呈現
       const pStr = hasData 
         ? (p > 0 ? `<span class="price-val">${p.toLocaleString()}</span>` : '<span style="color:#aaa">0</span>') 
         : '<span style="color:#ccc; font-size:12px;">Loading...</span>';
@@ -303,7 +356,7 @@
         : '<span style="color:#ccc; font-size:12px;">Loading...</span>';
 
       return `
-        <tr class="${rowClass}">
+        <tr class="${isLoss ? 'alert-row' : ''}">
           <td><div style="font-weight:500;">${item.name}</div></td>
           <td class="r" style="font-size:12px; color:#999; font-family:monospace;">#${item.id}</td>
           <td class="r" style="font-weight:500; font-family:monospace;">${item.npcPrice}</td>
@@ -314,7 +367,7 @@
     }).join('');
 
     if (displayList.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color:#999;">此型號下無符合條件的魔晶石</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 40px; color:#999;">沒有符合此多重篩選條件的魔晶石</td></tr>`;
     }
   }
 </script>
