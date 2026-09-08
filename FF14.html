@@ -666,7 +666,7 @@
 
         // 如果還有下一組，就等待 1 秒再繼續
         if (i + chunkSize < ids.length) {
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 5000));
         }
       }
     }
