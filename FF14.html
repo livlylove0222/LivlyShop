@@ -620,7 +620,7 @@
       render();
 
       // 每 20 筆一組
-      const chunkSize = 20;
+      const chunkSize = 5;
       for (let i = 0; i < ids.length; i += chunkSize) {
         const chunk = ids.slice(i, i + chunkSize);
 
@@ -666,7 +666,7 @@
 
         // 如果還有下一組，就等待 1 秒再繼續
         if (i + chunkSize < ids.length) {
-          await new Promise(resolve => setTimeout(resolve, 5000));
+          await new Promise(resolve => setTimeout(resolve, 3000));
         }
       }
     }
